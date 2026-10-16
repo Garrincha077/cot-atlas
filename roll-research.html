@@ -16,7 +16,7 @@
 <label>Roll prije dospijeća<input id="rollDays" type="number" value="5" min="1" max="45" step="1"></label>
 <label>Provizija po strani (USD)<input id="commission" type="number" value="2" min="0" max="10000" step=".25"></label>
 <label>Slippage po strani (ticks)<input id="slippage" type="number" value="1" min="0" max="100" step=".5"></label>
-<label>ES izvor pojedinačnih ugovora<select id="priceProvider"><option value="community">Arhiva IBKR-označenih minutnih podataka (ES)</option><option value="nqeval">NQ — evaluacijski uzorak dospijeća</option><option value="yahoo">Yahoo dnevni close (usporedba)</option></select></label>
+<label>ES/NQ izvor pojedinačnih ugovora<select id="priceProvider"><option value="community">Arhiva IBKR-označenih minutnih podataka (ES)</option><option value="nqeval">NQ — evaluacijski uzorak dospijeća</option><option value="yahoo">Yahoo dnevni close (usporedba)</option></select></label>
 <label>Povijest dospijeća<select id="priceYears"><option value="2">2 godine</option><option value="5">5 godina</option><option value="10" selected>10 godina (ako dostupno)</option></select></label><label>Min. dnevni volumen<select id="minVolume"><option value="1">1 ugovor</option><option value="10" selected>10 ugovora</option><option value="100">100 ugovora</option></select></label>
 </div><div class="actions"><button id="run">▶ Spoji COT i ugovorne cijene</button><button id="download" class="secondary" disabled>Preuzmi rezultate JSON</button></div><p class="status" id="status">Svaki rezultat računa se na zahtjev; tržišne cijene nisu pohranjene u javnom GitHub repozitoriju.</p></section>
 <div id="result">
