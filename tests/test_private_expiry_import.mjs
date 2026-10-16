@@ -64,5 +64,7 @@ test("UI exposes local-only CSV without uploading data, and shows per-year price
  assert.match(html,/window\.COT_LOCAL_PRICES\.annual/);
  assert.match(html,/provider==="local"\?file\.text\(\)/);
  assert.match(html,/id="yearRows"/);
+ assert.match(html,/id="signalUniqueStats"/);
+ assert.match(html,/distinctCompletedCotReportDates/);
  assert.ok(!html.includes('formData.append'));
 });
