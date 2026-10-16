@@ -32,6 +32,6 @@ test("archive explorer validates client Javascript, exposes years and source aud
 test("downloaded historical positions never represented as a PIT release vintage",()=>{
  const api=file("api/core-history.js");
  const script=file("scripts/build_core_history.py");
- assert.ok(api.includes("not original release vintages"));
+ assert.ok(api.includes("not release vintages"));
  assert.ok(script.includes('"vintage_verified":False'));
 });
