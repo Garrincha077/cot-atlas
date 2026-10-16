@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+/data/*.sqlite3
+/data/*.sqlite3-wal
+/data/*.sqlite3-shm
+/data/*.gz.tmp
+# Intentionally TRACK /data/cot.sqlite3.gz and manifest.json
