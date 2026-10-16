@@ -152,6 +152,7 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    out.push({strategy:strategy.id,label:strategy.label,horizonWeeks,diagnostics,quality,
      inSample:metrics(train),outOfSample:metrics(holdout),combined:metrics(trades),
      completedSignalDates:trades.map(x=>x.signalDate),
+     completedHoldoutSignalDates:holdout.map(x=>x.signalDate),
      recent:trades.slice(-15)});
   }
  }
@@ -170,7 +171,7 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    options,strategies:STRATEGIES,rows:out,
    // Distinct Tuesday COT observation dates; not statistically independent trades.
    distinctCompletedCotReportDates:[...new Set(out.flatMap(x=>x.completedSignalDates))].sort(),
-   distinctHoldoutCotReportDates:[...new Set(out.flatMap(x=>x.recent.filter(t=>t.entry>=splitDate).map(t=>t.signalDate)))].sort(),
+   distinctHoldoutCotReportDates:[...new Set(out.flatMap(x=>x.completedHoldoutSignalDates))].sort(),
    distinctSignalCaution:"Distinct COT report dates can still produce overlapping positions, correlated strategies and multiple-tested horizons; this is NOT an independent-trade count."};
 }
 root.COT_ROLL_STUDY={study,generate,HORIZONS,STRATEGIES};
