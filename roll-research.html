@@ -5,7 +5,7 @@
 <div class="eyebrow">COT ATLAS / PRIVATE EMPIRICAL RESEARCH / v0.9</div>
 <h1>COT signali × <em>pojedinačna futures dospijeća</em></h1>
 <p>Spoji povijesne CFTC pozicije s cijenama pojedinačnih dospijeća. Svaka hipotetska trgovina koristi isti ugovor do rolla; cijena sljedećeg ugovora ne računa se kao profit ili gubitak.</p>
-<div class="notice"><strong>Ograničenja istraživanja:</strong> Yahoo pruža dnevne zaključne cijene, NE službene settlemente; CFTC povijest može biti naknadno ispravljena. Za 2025. nadoknađene izvještaje koristimo službeni posebni kalendar, a za 2026. službeni okvirni kalendar CFTC-a. Za ostale standardne datume ostaje izričito označena pretpostavka petka. Nema potvrđenih izvršnih cijena, punog PIT-a ni pouzdanih strategijskih prinosa iz kratkih i nepotpunih povijesti dospijeća.</div>
+<div class="notice"><strong>Ograničenja istraživanja:</strong> Dostupni izvori pružaju dnevne zaključne ili iz minutnih cijena izvedene CLOSE vrijednosti, NE službene settlemente. Community ES zapisi označeni su IBKR-om, ali originalna autentičnost nije neovisno potvrđena; CFTC povijest može biti naknadno ispravljena. Za 2025. nadoknađene izvještaje koristimo službeni posebni kalendar, a za 2026. službeni okvirni kalendar CFTC-a. Za ostale standardne datume ostaje izričito označena pretpostavka petka. Nema potvrđenih izvršnih cijena, punog PIT-a ni pouzdanih strategijskih prinosa iz kratkih i nepotpunih povijesti dospijeća.</div>
 <section class="panel"><h2>Konfiguracija</h2>
 <div class="controls">
 <label>Ugovor<select id="market"></select></label>
@@ -16,8 +16,9 @@
 <label>Roll prije dospijeća<input id="rollDays" type="number" value="5" min="1" max="45" step="1"></label>
 <label>Provizija po strani (USD)<input id="commission" type="number" value="2" min="0" max="10000" step=".25"></label>
 <label>Slippage po strani (ticks)<input id="slippage" type="number" value="1" min="0" max="100" step=".5"></label>
+<label>ES izvor pojedinačnih ugovora<select id="priceProvider"><option value="community">Arhiva IBKR-označenih minutnih podataka (ES)</option><option value="yahoo">Yahoo dnevni close (usporedba)</option></select></label>
 <label>Povijest dospijeća<select id="priceYears"><option value="2">2 godine</option><option value="5">5 godina</option><option value="10" selected>10 godina (ako dostupno)</option></select></label><label>Min. dnevni volumen<select id="minVolume"><option value="1">1 ugovor</option><option value="10" selected>10 ugovora</option><option value="100">100 ugovora</option></select></label>
-</div><div class="actions"><button id="run">▶ Spoji COT i futures cijene</button><button id="download" class="secondary" disabled>Preuzmi rezultate JSON</button></div><p class="status" id="status">Svaki rezultat računa se na zahtjev; tržišne cijene nisu pohranjene u javnom GitHub repozitoriju.</p></section>
+</div><div class="actions"><button id="run">▶ Spoji COT i ugovorne cijene</button><button id="download" class="secondary" disabled>Preuzmi rezultate JSON</button></div><p class="status" id="status">Svaki rezultat računa se na zahtjev; tržišne cijene nisu pohranjene u javnom GitHub repozitoriju.</p></section>
 <div id="result">
 <div class="kpis" id="kpis"></div>
 <section class="panel"><h2>5 strategija × 5 razdoblja držanja</h2><div class="tabs" id="tabs"></div>
@@ -50,15 +51,17 @@ $("run").onclick=async()=>{
  try{
  const root=$("market").value,code=map[root].code,report=$("report").value,cat=$("category").value,counterpart=opponent[report][cat];
  const q=c=>"/api/core-history?"+new URLSearchParams({report,category:c,code,years:"10"});
- const [market,primary,other]=await Promise.all([json("/api/free-contracts?"+new URLSearchParams({root,years:$("priceYears").value,minVolume:$("minVolume").value})),json(q(cat)),json(q(counterpart))]);
+ const provider=root==="ES"&&$("priceProvider").value==="community"?"community":"yahoo";
+ const endpoint=(provider==="community"?"/api/community-expiries?":"/api/free-contracts?")+new URLSearchParams({root,years:$("priceYears").value,minVolume:$("minVolume").value});
+ const [market,primary,other]=await Promise.all([json(endpoint),json(q(cat)),json(q(counterpart))]);
  if(root!==$("market").value||report!==$("report").value||cat!==$("category").value)throw Error("Odabir se promijenio tijekom dohvata; pokreni ponovno");
- const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source="Yahoo per-expiry dnevni CLOSE, zadnje trgovanje prema IBKR (2026-10-16)";
+ const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source=provider==="community"?"Zajednička arhiva kfccolonel1/BARS (IBKR-označene minute), zadnji dnevni CLOSE proxy; podrijetlo nije neovisno potvrđeno":"Yahoo per-expiry dnevni CLOSE, zadnje trgovanje prema IBKR (2026-10-16)";
  const fingerprint=async input=>{const buffer=new TextEncoder().encode(JSON.stringify(input));const sha=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(sha)].map(n=>n.toString(16).padStart(2,"0")).join("")};
  const inputHashes={prices:await fingerprint(market.rows),primaryCot:await fingerprint(primary.rows),counterpartCot:await fingerprint(other.rows)};
  result=window.COT_ROLL_STUDY.study(primary.rows,other.rows,data,window.COT_ROLL_ENGINE,{
   lookback:Number($("window").value),rollDays:Number($("rollDays").value),method:$("method").value,
   commissionPerSide:Number($("commission").value),slippageTicks:Number($("slippage").value),contracts:1});
- source={root,code,report,category:cat,counterpart,primaryRows:primary.rows.length,priceRows:market.rows.length,inputHashes,marketSource:market.priceBasis,marketMinVolume:market.minVolume,marketYears:market.years,archiveSha:primary.snapshotSHA256};horizon=4;selected="extreme_reversal";render();
+ source={root,code,report,category:cat,counterpart,primaryRows:primary.rows.length,priceRows:market.rows.length,inputHashes,marketSource:market.priceBasis,marketPublisher:market.publisher||"Yahoo",marketMinVolume:market.minVolume,marketYears:market.years,archiveSha:primary.snapshotSHA256};horizon=4;selected="extreme_reversal";render();
  $("download").disabled=false;$("status").textContent="Izračunano svih 25 kombinacija na dostupnom dijelu povijesti. Zapisano u memoriji preglednika.";
  }catch(e){$("status").textContent="Nije moguće dovršiti analizu: "+e.message;$("result").style.display="none"}
  finally{b.disabled=false}
@@ -68,7 +71,7 @@ function render(){
  const r=result,available=r.rows.filter(x=>x.horizonWeeks===horizon),valid=r.rows.filter(x=>x.quality.comparisonEligible);
  const combined=r.rows.filter(x=>x.horizonWeeks===4).reduce((s,x)=>s+x.diagnostics.eligible,0);
  $("kpis").innerHTML=metricsCard("COT opažanja",fmt(source.primaryRows,0),r.firstCot+" → "+r.lastCot)+
- metricsCard("Ugovor–dan cijene",fmt(r.quoteRows,0),r.firstPrice+" → "+r.lastPrice+" · min. volumen "+source.marketMinVolume)+
+ metricsCard("Ugovor–dan cijene",fmt(r.quoteRows,0),r.firstPrice+" → "+r.lastPrice+" · "+source.marketPublisher+" · min. volumen "+source.marketMinVolume)+
  metricsCard("Izvedive trgovine, 4W",fmt(combined,0),"zbroj strategija, mogu se preklapati")+
  metricsCard("Istraživački prihvatljive",fmt(valid.length,0),"od 25; nijedna nije PIT certificirana");
  $("tabs").innerHTML=[1,2,4,8,12].map(h=>'<button class="'+(h===horizon?"active":"")+'" data-h="'+h+'">'+h+' tjedna</button>').join("");
@@ -99,7 +102,7 @@ function render(){
   '<p>CFTC vremenski izvori: '+Object.entries(r.releaseSources||{}).map(([k,v])=>k+': '+v).join(' · ')+'</p>'+
   '<p>Izvještaji bez sigurnog datuma, isključeni: '+r.excludedReleaseReports+'</p>';
  $("provenance").innerHTML='<p><strong>CFTC:</strong> '+esc(r.positionSource)+' ('+esc(source.report)+' / '+esc(source.category)+' naspram '+esc(source.counterpart)+')</p>'+
- '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
+ '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. '+esc(source.marketSource)+'. Nije burzovni settlement; originalna autentičnost izvora može biti nepotvrđena.</p>'+
  '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Trgovanja koja prelaze granicu dvaju uzoraka uklonjena su iz obje evaluacije. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
  '<p><strong>Datum signala:</strong> COT izvještaj: ulaz tek NAKON planirane objave prema CFTC-u ili izričito označenoj pretpostavci petka za starije datume.</p>'+
  '<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
