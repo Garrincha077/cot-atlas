@@ -6,6 +6,7 @@ COT Atlas is a public-data research dashboard powered by the **CFTC Public Repor
 
 - **GitHub-connected edition:** https://cot-atlas-git.vercel.app
 - **Research Lab v0.4:** https://cot-atlas-git.vercel.app/research.html
+- **Contract Roll Lab v0.5:** https://cot-atlas-git.vercel.app/roll-lab.html
 - **Original standalone edition:** https://cot-atlas-live.vercel.app (preserved independently)
 
 ## What works
@@ -84,3 +85,7 @@ The lab runs **five prespecified signal hypotheses × 1, 2, 4, 8, 12 week holdin
 **Long history:** CFTC historical API returns its *current* version of historical position records, which may include later corrections. Historical original as-published vintages and independent roll-adjusted futures prices are required before calling this research strict point-in-time or trade-executable.
 
 The core signal engine is dependency-free in `lib/research-engine.js`; its deterministic offline tests are at `tests/test_research_lab.mjs`, and `.github/workflows/research-ci.yml` runs those tests on PRs and relevant pushes.
+
+## Contract Roll Lab v0.5
+
+For contract-specific settlement/roll P&L with private browser-only CSV imports see [the Croatian detailed guide](docs/CONTRACT_ROLL_LAB_HR.md). This is not yet an integrated point-in-time COT strategy backtest. Do not compare percentage returns from Yahoo's proxy to contract-level USD P&L.

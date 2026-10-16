@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'research.html'
+      - 'roll-lab.html'
+      - 'contract-roll-engine.js'
+      - 'tests/test_contract_roll.mjs'
       - 'index.html'
       - 'lib/**'
       - 'api/research.js'
@@ -13,6 +16,9 @@ on:
     branches: [main]
     paths:
       - 'research.html'
+      - 'roll-lab.html'
+      - 'contract-roll-engine.js'
+      - 'tests/test_contract_roll.mjs'
       - 'index.html'
       - 'lib/**'
       - 'api/research.js'
@@ -38,4 +44,4 @@ jobs:
           node --version
           node -e "if (parseInt(process.versions.node, 10) < 20) process.exit(1)"
       - name: Run offline market and research tests
-        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs
