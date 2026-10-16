@@ -17,6 +17,8 @@ on:
       - 'cot-release-calendar.js'
       - 'tests/test_roll_study.mjs'
       - 'api/free-contracts.js'
+      - 'api/community-expiries.js'
+      - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
       - 'tests/test_contract_roll.mjs'
@@ -44,6 +46,8 @@ on:
       - 'cot-release-calendar.js'
       - 'tests/test_roll_study.mjs'
       - 'api/free-contracts.js'
+      - 'api/community-expiries.js'
+      - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
       - 'tests/test_contract_roll.mjs'
@@ -72,4 +76,4 @@ jobs:
           node --version
           node -e "if (parseInt(process.versions.node, 10) < 20) process.exit(1)"
       - name: Run offline market and research tests
-        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs tests/test_community_expiries.mjs
