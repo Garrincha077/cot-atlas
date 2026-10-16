@@ -142,3 +142,19 @@ The optional `/api/free-contracts?root=...` fetches **private, on-demand** daily
 Dates for each listed contract were checked against connected IBKR contract metadata on 2026-10-16. Yahoo availability varies, often has missing/zero-volume bars, and the contract chain is **not complete**. All quotes are fetched on demand, filtered to positive-volume days on or before the corresponding last-trading date, and displayed with accurate source attribution. A front-month roll cannot be simulated through absent next contracts.
 
 **This is not licensed exchange settlement, tradable execution or vintage-audited PIT research.** Private Vercel authentication helps prevent public access but does *not* override any provider's terms for collection, storage, automated access, or redistribution; make any continued usage comply with the source's permitted scope. The full CFTC historical archive remains separate, freely queryable by report, and is not affected by these price settings.
+
+## v0.9 — COT × Individual Futures Roll Research (PRIVATE)
+
+[Open the COT × Roll Backtest](https://cot-atlas-git.vercel.app/roll-research.html) (requires Vercel SSO).
+
+The private browser combines **official CFTC historical positioning** for the selected futures contract, both primary and counterpart participants, with on-demand individual-expiry **Yahoo daily CLOSE** (NOT official settlement) data and existing contract roll engine. Market data are not committed to GitHub. The new calculation runs five predefined hypotheses (Extreme Reversal, Positioning Divergence, Position Acceleration, Crowded Trade, COT + same-expiry Price Trend) across 1/2/4/8/12-week holds.
+
+**Temporal constraints:** COT report observations dated Tuesday cannot be traded Tuesday. The current model assumes Friday release and enters on the next **later** contract quote date. Reports dated 2025-09-30 through 2026-01-20 are excluded because actual delayed publication dates are uncertain. Same-expiry 20/100-day trend indicators use prices **before** presumed release. Volume crossover roll uses only the two previously completed sessions — never end-of-trading volume from the execution date.
+
+**Honest sample accounting:** Each simulated event records the real contract(s) and same-expiry close-to-close USD P&L, slippage/commissions, a matched-calendar long benchmark, rejected data due to missing entries/exits/rolls, and overlap. Last 30% of *available market price dates* is the holdout; earlier CFTC observations are signal warmup only. With fewer than 8 holdout trades, the result is flagged as insufficient. No benchmark or USD total is invented when no trade can be computed.
+
+**Audit:** SHA-256 of the exact primary COT, counterpart COT and downloaded quote rows, plus the CFTC archive snapshot ID, are included in browser export. There is no durable raw Yahoo snapshot; these hashes reveal provider revisions but cannot reproduce bars if the provider deletes them.
+
+**Limits:** Current revised COT historical archive is not as-published PIT, the assumed release dates are not individually validated, Yahoo individual-expiry daily closes are not exchange settlements, futures margins, financing, taxes and fill availability are not modeled, and 25 comparisons invite selection bias. USD hypothetical P&L is **not** percent return on capital. Only 13 underlying roots currently have a sparse direct-expiry quote chain; most ten-year COT history has **no matching prices**. This tool is research only, not a certified profitable trading strategy.
+
+Source files: cot-roll-study.js, roll-research.html; tests/test_roll_study.mjs. CI checks those plus contract-roll-engine.js.

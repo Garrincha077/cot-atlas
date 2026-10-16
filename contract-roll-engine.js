@@ -109,9 +109,13 @@ function simulate(data,opts={}){
    }else if(method==="volume2"){
     const list=quotes.filter(q=>days(date,q.expiry)>rollDays&&q.expiry>current.expiry).sort((a,b)=>a.expiry.localeCompare(b.expiry));
     const candidate=list[0];
-    if(candidate&&current.volume!=null&&candidate.volume!=null&&candidate.volume>current.volume){
-     const prevDate=dates[index-1],pv=byKey.get(prevDate+"|"+candidate.contract),pf=byKey.get(prevDate+"|"+current.contract);
-     if(pv&&pf&&pv.volume!=null&&pf.volume!=null&&pv.volume>pf.volume)next=candidate;
+    if(candidate&&index>=2){
+     // A trade at today's CLOSE cannot know today's finalized volume.
+     // Require a volume crossover on the TWO PREVIOUS COMPLETED sessions.
+     const prevDate=dates[index-1],priorDate=dates[index-2];
+     const pv=byKey.get(prevDate+"|"+candidate.contract),pf=byKey.get(prevDate+"|"+current.contract);
+     const av=byKey.get(priorDate+"|"+candidate.contract),af=byKey.get(priorDate+"|"+current.contract);
+     if(pv&&pf&&av&&af&&[pv.volume,pf.volume,av.volume,af.volume].every(Number.isFinite)&&pv.volume>pf.volume&&av.volume>af.volume)next=candidate;
     }
    }
    if(next&&next.contract!==current.contract){

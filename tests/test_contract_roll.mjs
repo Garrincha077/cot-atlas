@@ -41,7 +41,7 @@ test("short side has opposite gross price P&L while paying same fees",()=>{
 test("volume crossover requires two observed prior days and not future volume",()=>{
  const d=parseCSV(csvFixture({volumeShift:true}));
  const r=simulate(d,{...options,rollDays:1,method:"volume2"});
- assert.equal(r.result.rolls,1);assert.equal(r.transactions[1].date,"2026-01-04");
+ assert.equal(r.result.rolls,1);assert.equal(r.transactions[1].date,"2026-01-05");
 });
 test("missing held-contract settlement refuses fabrication and halt",()=>{
  const d=parseCSV(csvFixture({priceGap:true}));
