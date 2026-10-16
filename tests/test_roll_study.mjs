@@ -1,0 +1,71 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+const root={window:{}};vm.runInNewContext(fs.readFileSync(new URL("../contract-roll-engine.js",import.meta.url),"utf8"),root);
+vm.runInNewContext(fs.readFileSync(new URL("../cot-roll-study.js",import.meta.url),"utf8"),root);
+const roll=root.window.COT_ROLL_ENGINE,lab=root.window.COT_ROLL_STUDY;
+const shifted=(date,n)=>new Date(Date.parse(date+"T00:00:00Z")+n*86400000).toISOString().slice(0,10);
+function inputs(){
+ const p=[],q=[],lines=["date,root,contract,expiry,settle,multiplier,tick_size,volume"];
+ for(let i=0;i<300;i++){
+  const dt=shifted("2021-03-02",i*7),z=Math.sin(i/9)*.31+Math.sin(i/2)*.038;
+  p.push([dt,"088691","GC","Metals",3000,1300+z*1300,1300-z*1300]);
+  q.push([dt,"088691","GC","Metals",3000,1300-z*1600,1300+z*1600]);
+ }
+ for(let d="2025-07-01";d<="2026-11-27";d=shifted(d,1)){
+  const weekday=new Date(d+"T00:00:00Z").getUTCDay();if(weekday===0||weekday===6)continue;
+  const step=Math.round((Date.parse(d+"T00:00:00Z")-Date.parse("2025-07-01T00:00:00Z"))/86400000);
+  if(d<="2026-06-30")lines.push([d,"GC","GCZ26","2026-06-30",100+step*.05,100,.1,100].join(","));
+  lines.push([d,"GC","GCG27","2027-02-26",205+step*.05,100,.1,100].join(","));
+ }
+ return {p,q,data:roll.parseCSV(lines.join("\n"))};
+}
+const {p,q,data}=inputs();
+test("entire integrated study generates 25 strategies×holding periods with provenance",()=>{
+ const out=lab.study(p,q,data,roll,{lookback:104,rollDays:5});
+ assert.equal(out.rows.length,25);
+ assert.equal(out.mode,"PRIVATE_EXPLORATORY_COT_CONTRACT_ROLL_V0_9");
+ assert.equal(out.asPublishedCOTVintageVerified,false);
+ assert.equal(out.exchangeSettlementVerified,false);
+ assert.equal(out.priceBasis,"USER_IMPORT_UNVERIFIED");
+ assert.ok(out.rows.every(x=>x.diagnostics.signals>=x.diagnostics.eligible));
+ assert.ok(out.rows.every(x=>x.inSample.trades+x.outOfSample.trades===x.combined.trades));
+});
+test("signal entry always after assumed Friday, and delayed COT publication period removed",()=>{
+ const out=lab.generate(p,q,data,{lookback:104,rollDays:5});
+ for(const signals of Object.values(out.signals))for(const t of signals){
+  assert.ok(t.availableAfter>t.date);
+  assert.ok(!("2025-09-30"<=t.date&&t.date<="2026-01-20"));
+  const dow=new Date(t.availableAfter+"T00:00:00Z").getUTCDay();
+  assert.equal(dow,5);
+ }
+});
+test("fee costs reduce hypothetical net P&L, but not COT signal counts",()=>{
+ const a=lab.study(p,q,data,roll,{lookback:104,commissionPerSide:0,slippageTicks:0});
+ const b=lab.study(p,q,data,roll,{lookback:104,commissionPerSide:8,slippageTicks:2});
+ for(let i=0;i<25;i++){
+  assert.equal(a.rows[i].diagnostics.signals,b.rows[i].diagnostics.signals);
+  assert.equal(a.rows[i].diagnostics.eligible,b.rows[i].diagnostics.eligible);
+  if(a.rows[i].combined.trades>0)assert.ok(a.rows[i].combined.totalNetUSD>=b.rows[i].combined.totalNetUSD);
+ }
+});
+test("same-expiry P&L does not include a 100-point spread on a roll",()=>{
+ const result=roll.simulate(data,{start:"2026-06-18",end:"2026-07-17",method:"fixed",rollDays:5,commissionPerSide:0,slippageTicks:0});
+ assert.equal(result.result.rolls,1);
+ assert.ok(Math.abs(result.result.grossUSD)<1000,"Spurious 100-point cross-contract price gap detected");
+});
+test("absence of actual price observations yields zeros and diagnostics, never invented performance",()=>{
+ const tooLate={...data,bars:data.bars.filter(x=>x.date>="2026-10-01"),dates:data.dates.filter(x=>x>="2026-10-01")};
+ const out=lab.study(p,q,tooLate,roll,{lookback:104});
+ assert.equal(out.rows.length,25);
+ for(const x of out.rows)if(!x.combined.trades){assert.equal(x.combined.totalNetUSD,null);assert.equal(x.outOfSample.avgNetUSD,null)}
+});
+test("integrated browser UI script parses and requests both COT counterpart histories",()=>{
+ const html=fs.readFileSync(new URL("../roll-research.html",import.meta.url),"utf8");
+ const match=html.match(/<script>([\s\S]*?)<\/script>/);
+ assert.ok(match);assert.doesNotThrow(()=>new Function(match[1]));
+ assert.match(html,/\/api\/core-history\?/);assert.match(html,/\/api\/free-contracts\?/);
+ assert.match(html,/\/cot-roll-study.js/);assert.match(html,/\/contract-roll-engine.js/);
+ assert.match(html,/Holdout/);
+});
