@@ -37,7 +37,7 @@ const map=Object.fromEntries(marketData.map(([root,code,label])=>[root,{code,lab
 $("market").innerHTML=marketData.map(([root,_,label])=>'<option value="'+root+'">'+esc(label)+' ('+root+')</option>').join("");
 const formats={disagg_fut:["managed_money","producer_merchant"],tff_fut:["leveraged_funds","asset_managers"]};
 function updateCategory(){const opts=formats[$("report").value],old=$("category").value;$("category").innerHTML=opts.map(x=>'<option value="'+x+'">'+x.replaceAll("_"," ")+'</option>').join("");if(opts.includes(old))$("category").value=old}
-function reportForMarket(){const root=$("market").value;$("report").value=["ES","NQ","ZN","ZB"].includes(root)?"tff_fut":"disagg_fut";updateCategory()}
+function reportForMarket(){const root=$("market").value;$("report").value=["ES","NQ","ZN","ZB"].includes(root)?"tff_fut":"disagg_fut";updateCategory();$("priceProvider").value=root==="ES"?"community":root==="NQ"?"nqeval":"yahoo"}
 $("market").onchange=reportForMarket;$("report").onchange=updateCategory;reportForMarket();
 const fmt=(x,d=2)=>x===null||x===undefined?"—":Number(x).toLocaleString("hr-HR",{maximumFractionDigits:d,minimumFractionDigits:d});
 const tone=x=>x==null?"muted":x>0?"good":x<0?"badval":"muted";
@@ -51,11 +51,11 @@ $("run").onclick=async()=>{
  try{
  const root=$("market").value,code=map[root].code,report=$("report").value,cat=$("category").value,counterpart=opponent[report][cat];
  const q=c=>"/api/core-history?"+new URLSearchParams({report,category:c,code,years:"10"});
- const provider=root==="ES"&&$("priceProvider").value==="community"?"community":"yahoo";
- const endpoint=(provider==="community"?"/api/community-expiries?":"/api/free-contracts?")+new URLSearchParams({root,years:$("priceYears").value,minVolume:$("minVolume").value});
+ const choice=$("priceProvider").value,provider=root==="ES"&&choice==="community"?"community":root==="NQ"&&choice==="nqeval"?"nqeval":"yahoo";
+ const endpoint=(provider==="community"?"/api/community-expiries?":provider==="nqeval"?"/api/nq-evaluation?":"/api/free-contracts?")+new URLSearchParams({root,years:$("priceYears").value,minVolume:$("minVolume").value});
  const [market,primary,other]=await Promise.all([json(endpoint),json(q(cat)),json(q(counterpart))]);
  if(root!==$("market").value||report!==$("report").value||cat!==$("category").value)throw Error("Odabir se promijenio tijekom dohvata; pokreni ponovno");
- const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source=provider==="community"?"Zajednička arhiva kfccolonel1/BARS (IBKR-označene minute), zadnji dnevni CLOSE proxy; podrijetlo nije neovisno potvrđeno":"Yahoo per-expiry dnevni CLOSE, zadnje trgovanje prema IBKR (2026-10-16)";
+ const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source=provider==="community"?"Community IBKR-labelled ES minute close proxy":provider==="nqeval"?"Hugging Face NQ per-expiry daily close evaluation sample, unaudited":"Yahoo per-expiry daily close proxy";
  const fingerprint=async input=>{const buffer=new TextEncoder().encode(JSON.stringify(input));const sha=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(sha)].map(n=>n.toString(16).padStart(2,"0")).join("")};
  const inputHashes={prices:await fingerprint(market.rows),primaryCot:await fingerprint(primary.rows),counterpartCot:await fingerprint(other.rows)};
  result=window.COT_ROLL_STUDY.study(primary.rows,other.rows,data,window.COT_ROLL_ENGINE,{
