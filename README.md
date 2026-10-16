@@ -185,3 +185,27 @@ Source files: cot-roll-study.js, roll-research.html; tests/test_roll_study.mjs. 
 - Summary JSON exports deliberately exclude all underlying Yahoo price bars and include quote quality, expiry gaps and sampled roll success/failure counts. The app remains Vercel-login-protected; source access terms still apply.
 
 Tests: node --test tests/test_coverage_audit.mjs. GitHub CI runs this alongside all earlier tests.
+
+
+## v1.2 — Research evidence gates and honest ES/NQ alternative-source audit
+
+[Open private COT × Futures Research](https://cot-atlas-git.vercel.app/roll-research.html).
+
+This release adds `cot-quality-gates.js` and enforces a **purged chronological 70/30 price-session split**: trades must close strictly before the split to enter the training subset, and must open on/after the split to enter the holdout subset. Trades straddling the split are excluded from both evaluations, counted separately, but remain in the full historical hypothetical-trade ledger.
+
+Each of the 25 signal × holding-horizon tests now reports `INSUFFICIENT` or `EXPLORATORY_ONLY` together with transparent reasons. The minimum *exploratory* requirements are at least 8 closed training trades, 8 holdout trades, four distinct holdout entry months, a holdout span of >=120 calendar days, and an observed contract-price date span >=365 days. Neither label certifies point-in-time COT vintages or futures executable trade P&L; `EXPLORATORY_ONLY` is NOT proof of a profitable trading edge. The gate is an evidence screen, not a p-value or out-of-sample statistical significance test.
+
+Verified real CFTC + current per-expiry Yahoo sources for GC, CL, ES and NQ: none of 25 configurations on any one of these four roots passes the sufficiency gate. Data gaps and low event counts dominate. This finding does not assert negative expected returns; it says available evidence is insufficient to evaluate an edge.
+
+### Alternate-source evaluation (2026-10-16)
+
+- Stooq expired ES/NQ contract CSV endpoints returned HTTP 403 in our production-like environment; unavailable as an automated fill source.
+- Barchart supports specific expired futures in its historical download interface, but the tested public request returned HTTP 202 without usable downloadable contract-by-day price rows; do not claim acquired expiry history.
+- [Databento contract history](https://github.com/azizuysal/dbn-cache) supports explicit ESZ24/NQH25 contracts *with the required provider API access*. The open-source downloader itself is not a free historical market database.
+- [Community NQ sample](https://github.com/getdata-finance/nq-1m-ohlcv-stocks-historical-data) contains intraday OHLCV but no trustworthy **individual expiry identifier** in each bar, and covers a limited 2026 window. It cannot be merged into an audited expiry roll ledger.
+- [Community TopstepX-derived futures data](https://github.com/axb0306/cme-futures-ohlc) has OHLCV root symbols but no verified contract month attached to the example daily rows. Those root-based bars are not equivalent to ESZ24 or NQH25.
+- [CME settlement access FAQ](https://www.cmegroup.com/articles/faqs/access-to-cme-group-settlement-data-faq.html) describes settlement access; this task has not acquired its historical per-expiry files.
+
+No absent ES/NQ contracts were filled using a continuous contract, guessed expiry or simulated quote. Quoted data are requested on demand and never committed to the public repo. Vercel SSO remains enabled.
+
+Regression tests: `tests/test_roll_study.mjs` covers the strict chronological split, sample sufficiency, classification and impossibility of upgrading these results to validated PIT/settlement trades.
