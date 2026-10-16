@@ -4,6 +4,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const root={window:{}};vm.runInNewContext(fs.readFileSync(new URL("../contract-roll-engine.js",import.meta.url),"utf8"),root);
 vm.runInNewContext(fs.readFileSync(new URL("../cot-release-calendar.js",import.meta.url),"utf8"),root);
+vm.runInNewContext(fs.readFileSync(new URL("../cot-quality-gates.js",import.meta.url),"utf8"),root);
 vm.runInNewContext(fs.readFileSync(new URL("../cot-roll-study.js",import.meta.url),"utf8"),root);
 const roll=root.window.COT_ROLL_ENGINE,lab=root.window.COT_ROLL_STUDY;
 const shifted=(date,n)=>new Date(Date.parse(date+"T00:00:00Z")+n*86400000).toISOString().slice(0,10);
@@ -31,7 +32,8 @@ test("entire integrated study generates 25 strategies×holding periods with prov
  assert.equal(out.exchangeSettlementVerified,false);
  assert.equal(out.priceBasis,"USER_IMPORT_UNVERIFIED");
  assert.ok(out.rows.every(x=>x.diagnostics.signals>=x.diagnostics.eligible));
- assert.ok(out.rows.every(x=>x.inSample.trades+x.outOfSample.trades===x.combined.trades));
+ assert.ok(out.rows.every(x=>x.inSample.trades+x.outOfSample.trades+x.quality.excludedCrossSplit===x.combined.trades));
+ assert.ok(out.rows.every(x=>x.quality.vintagePITCertified===false));
 });
 test("signal entry always after assumed Friday, and delayed COT publication period removed",()=>{
  const out=lab.generate(p,q,data,{lookback:104,rollDays:5});
@@ -83,4 +85,26 @@ test("2025 shutdown backlogs use official later publication dates, never naive F
  assert.equal(c.lookup("2026-10-13").releaseDate,"2026-10-16");
  assert.equal(c.lookup("2024-10-15").source,"UNVERIFIED_FRIDAY_PROXY");
  assert.equal(c.lookup("2026-06-15"),null);
+});
+
+test("quality gate rejects tiny and time-clustered holdout without fabricating confidence",()=>{
+ const gate=root.window.COT_QUALITY.assess;
+ const train=[{entry:"2024-01-04",exit:"2024-01-12"}];
+ const holdout=[{entry:"2025-10-01",exit:"2025-10-30"}];
+ const x=gate({train,holdout,boundaryExcluded:[],splitDate:"2025-01-01",priceDates:["2024-01-01","2026-01-10"]});
+ assert.equal(x.classification,"INSUFFICIENT");
+ assert.ok(x.reasonCodes.includes("HOLDOUT_FEWER_THAN_8"));
+ assert.ok(x.reasonCodes.includes("HOLDOUT_FEWER_THAN_4_DISTINCT_MONTHS"));
+ assert.equal(x.vintagePITCertified,false);
+});
+test("quality gate enforces chronological purge and rewards only sufficiently spread hypothetical samples",()=>{
+ const gate=root.window.COT_QUALITY.assess;
+ const train=Array.from({length:9},(_,i)=>({entry:shifted("2023-01-04",i*35),exit:shifted("2023-01-04",i*35+14)}));
+ const holdout=Array.from({length:10},(_,i)=>({entry:shifted("2025-03-01",i*24),exit:shifted("2025-03-01",i*24+7)}));
+ const q=gate({train,holdout,boundaryExcluded:[{entry:"2025-02-22",exit:"2025-03-06"}],splitDate:"2025-03-01",priceDates:["2023-01-01","2026-05-01"]});
+ assert.equal(q.classification,"EXPLORATORY_ONLY");
+ assert.equal(q.excludedCrossSplit,1);
+ assert.equal(q.comparisonEligible,true);
+ assert.equal(q.exchangeSettlementCertified,false);
+ assert.throws(()=>gate({train:[{entry:"2025-02-23",exit:"2025-03-02"}],holdout,splitDate:"2025-03-01"}),/Leakage/);
 });
