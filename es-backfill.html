@@ -30,7 +30,7 @@ let report=null;
 $("run").onclick=async()=>{
  const button=$("run");button.disabled=true;$("download").disabled=true;$("output").style.display="none";$("status").textContent="Učitavam CFTC pozicioniranje i postojeću ugovornu ES bazu...";
  try{
-  const fs=[...$("files").files||[]],min=Number($("minVolume").value),origin=$("origin").value.trim();
+  const fs=[...($("files").files||[])],min=Number($("minVolume").value),origin=$("origin").value.trim();
   if(fs.length>24)throw Error("Najviše 24 CSV-a");
   if(fs.length&&(!origin||origin.length<8))throw Error("Za stvarne povijesne datoteke navedi opis podrijetla (najmanje 8 znakova)");
   if(fs.reduce((n,f)=>n+f.size,0)>30*1024*1024)throw Error("Ukupno najviše 30 MB CSV-ova");
@@ -41,17 +41,16 @@ $("run").onclick=async()=>{
   const baselineData=V.validate(barsCSV(baseline.rows),eng,{selectedRoot:"ES",minimumVolume:min});
   baselineData.source=baseline.priceBasis+" / SHA-pinned community source";baselineData.proxyPriceBasis=baseline.priceBasis;
   const base=window.COT_ROLL_STUDY.study(primary.rows,other.rows,baselineData,eng,opts);
-  let mergedData=baselineData,parsed=null,comparison=null,proofs=[];
+  let mergedData=baselineData,parsed=null,comparison=null,proofs=[],effectiveStudy=base;
   if(fs.length){
    $("status").textContent="Provjeravam identitet dospijeća, cijene i ugovorne volumene lokalnih CSV-ova…";
    const files=await Promise.all(fs.map(async f=>{const text=await f.text();proofs.push({file:f.name,sizeBytes:f.size,sha256:await sha(text)});return {name:f.name,text}}));
    parsed=E.readFiles(files,eng,V,{minimumVolume:min});
    drawContracts(parsed.data);
    mergedData=E.merge(baselineData,parsed,eng,V,{minimumVolume:min});
-   const extended=window.COT_ROLL_STUDY.study(primary.rows,other.rows,mergedData,eng,opts);
-   comparison=E.compare(base,extended);
+   effectiveStudy=window.COT_ROLL_STUDY.study(primary.rows,other.rows,mergedData,eng,opts);
+   comparison=E.compare(base,effectiveStudy);
   }else drawContracts();
-  const effective=E.summarizeStudy(comparison?{...base,...comparison.after,rows:base.rows}:base);
   const summary=comparison?comparison.after:E.summarizeStudy(base);
   const metrics=[
    ["Pojedinačni ES ugovori 2023–24",E.coverage(parsed?.data).filter(c=>c.required&&c.status==="REVIEW_CANDIDATE").length+"/8","Triage, ne dokazana autentičnost"],
@@ -59,7 +58,7 @@ $("run").onclick=async()=>{
    ["Holdout različiti COT datumi",fmt(summary.uniqueHoldoutReportDates),comparison?"Prije "+fmt(comparison.before.uniqueHoldoutReportDates)+" · promjena "+fmt(comparison.changes.uniqueHoldoutReportDates):"Holdout 2026-07-01"],
    ["Scenariji s dovoljnim uzorkom",fmt(summary.qualifyingExploratoryCells)+"/25","Bez tvrdnje o profitabilnosti"]];
   $("metrics").innerHTML=metrics.map(x=>'<div class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><small>'+esc(x[2])+'</small></div>').join("");
-  const sig=comparison?window.COT_ROLL_STUDY.study(primary.rows,other.rows,mergedData,eng,opts):base;
+  const sig=effectiveStudy;
   const sigByYear={};for(const date of sig.distinctCompletedCotReportDates){let year=date.slice(0,4);sigByYear[year]=(sigByYear[year]||0)+1}
   const yearly=V.annual(primary.rows,mergedData);
   $("years").innerHTML=yearly.map(y=>'<tr><td>'+y.year+'</td><td>'+fmt(y.cotReports)+'</td><td>'+fmt(y.uniquePriceDates)+'</td><td>'+fmt(y.individualContracts)+'</td><td>'+fmt(sigByYear[y.year]||0)+'</td></tr>').join("");
