@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 const root={window:{}};vm.runInNewContext(fs.readFileSync(new URL("../contract-roll-engine.js",import.meta.url),"utf8"),root);
+vm.runInNewContext(fs.readFileSync(new URL("../cot-release-calendar.js",import.meta.url),"utf8"),root);
 vm.runInNewContext(fs.readFileSync(new URL("../cot-roll-study.js",import.meta.url),"utf8"),root);
 const roll=root.window.COT_ROLL_ENGINE,lab=root.window.COT_ROLL_STUDY;
 const shifted=(date,n)=>new Date(Date.parse(date+"T00:00:00Z")+n*86400000).toISOString().slice(0,10);
@@ -36,9 +37,10 @@ test("signal entry always after assumed Friday, and delayed COT publication peri
  const out=lab.generate(p,q,data,{lookback:104,rollDays:5});
  for(const signals of Object.values(out.signals))for(const t of signals){
   assert.ok(t.availableAfter>t.date);
-  assert.ok(!("2025-09-30"<=t.date&&t.date<="2026-01-20"));
-  const dow=new Date(t.availableAfter+"T00:00:00Z").getUTCDay();
-  assert.equal(dow,5);
+  const release=root.window.COT_RELEASE_DATES.lookup(t.date);
+  assert.ok(release);
+  assert.equal(t.availableAfter,release.releaseDate);
+  assert.ok(["CFTC_OFFICIAL_SPECIAL_SCHEDULE","CFTC_OFFICIAL_TENTATIVE_2026","UNVERIFIED_FRIDAY_PROXY"].includes(t.releaseSource));
  }
 });
 test("fee costs reduce hypothetical net P&L, but not COT signal counts",()=>{
@@ -66,6 +68,19 @@ test("integrated browser UI script parses and requests both COT counterpart hist
  const match=html.match(/<script>([\s\S]*?)<\/script>/);
  assert.ok(match);assert.doesNotThrow(()=>new Function(match[1]));
  assert.match(html,/\/api\/core-history\?/);assert.match(html,/\/api\/free-contracts\?/);
- assert.match(html,/\/cot-roll-study.js/);assert.match(html,/\/contract-roll-engine.js/);
+ assert.match(html,/\/cot-roll-study.js/);
+ assert.match(html,/\/cot-release-calendar.js/);assert.match(html,/\/contract-roll-engine.js/);
  assert.match(html,/Holdout/);
+});
+
+test("2025 shutdown backlogs use official later publication dates, never naive Fridays",()=>{
+ const c=root.window.COT_RELEASE_DATES;
+ assert.equal(c.lookup("2025-09-30").releaseDate,"2025-11-19");
+ assert.equal(c.lookup("2025-11-10").releaseDate,"2025-12-10"); // Monday observation
+ assert.equal(c.lookup("2025-12-23").releaseDate,"2025-12-29");
+ assert.equal(c.lookup("2025-12-30").releaseDate,"2026-01-05");
+ assert.equal(c.lookup("2026-06-16").releaseDate,"2026-06-22"); // US holiday
+ assert.equal(c.lookup("2026-10-13").releaseDate,"2026-10-16");
+ assert.equal(c.lookup("2024-10-15").source,"UNVERIFIED_FRIDAY_PROXY");
+ assert.equal(c.lookup("2026-06-15"),null);
 });
