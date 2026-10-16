@@ -27,6 +27,9 @@ const {p,q,data}=inputs();
 test("entire integrated study generates 25 strategies×holding periods with provenance",()=>{
  const out=lab.study(p,q,data,roll,{lookback:104,rollDays:5});
  assert.equal(out.rows.length,25);
+ assert.equal(out.distinctCompletedCotReportDates.length,new Set(out.rows.flatMap(x=>x.completedSignalDates)).size);
+ assert.equal(out.distinctHoldoutCotReportDates.length,new Set(out.rows.flatMap(x=>x.completedHoldoutSignalDates)).size);
+ assert.ok(out.distinctCompletedCotReportDates.length<=out.rows.reduce((s,x)=>s+x.combined.trades,0));
  assert.equal(out.mode,"PRIVATE_EXPLORATORY_COT_CONTRACT_ROLL_V0_9");
  assert.equal(out.asPublishedCOTVintageVerified,false);
  assert.equal(out.exchangeSettlementVerified,false);
