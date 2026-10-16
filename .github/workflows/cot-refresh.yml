@@ -6,6 +6,7 @@ on:
       - 'scripts/update_snapshot.py'
       - 'scripts/capture_vintage.py'
       - 'tests/test_archives.py'
+      - 'tests/test_market_focus.mjs'
       - '.github/workflows/cot-refresh.yml'
   schedule:
     - cron: '17 23 * * 5'
@@ -38,6 +39,8 @@ jobs:
         run: python -u scripts/update_snapshot.py
       - name: Capture first-observed CFTC vintages
         run: python -u scripts/capture_vintage.py
+      - name: Validate flagship CFTC market catalog and frontend script
+        run: node --test tests/test_market_focus.mjs
       - name: Verify archive consistency and vintages
         run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Publish immutable revision
