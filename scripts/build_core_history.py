@@ -162,11 +162,12 @@ def main():
  codes=load_codes();restore();c=setup()
  current_count=c.execute("SELECT count(*) FROM observations").fetchone()[0]
  # Backfill earliest supported date for Disagg/TFF/CIT (2006), without inventing earlier records.
- since=os.getenv("COT_CORE_START_DATE") or ("2006-01-01" if current_count<10 else (dt.date.today()-dt.timedelta(days=90)).isoformat())
+ since=os.getenv("COT_CORE_START_DATE") or ("1986-01-01" if current_count<10 else (dt.date.today()-dt.timedelta(days=90)).isoformat())
  results=[]
  try:
   for report,source_id in DATASETS.items():
-   results.append(sync(c,report,source_id,codes,since))
+   r_since="2006-01-01" if since=="1986-01-01" and not report.startswith("legacy") else since
+   results.append(sync(c,report,source_id,codes,r_since))
   n=c.execute("SELECT count(*) FROM positions").fetchone()[0]
   minimum=10000 if current_count<10 else 10000
   if n<minimum:raise RuntimeError(f"Missing CFTC history, only {n} records")
