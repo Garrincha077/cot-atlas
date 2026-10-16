@@ -33,3 +33,13 @@ test("free contract UI retains manual local file import with unambiguous provena
  for(const root of ["SI","NQ","NG","HG","ZC","ZS","ZW","ZN","ZB","PL"])assert.ok(html.includes('value="'+root+'"'),root);
  assert.ok(html.includes("crypto.subtle.digest"));
 });
+
+test("per-expiry fetch supports 10-year individual-contract chart plus explicit volume gate",()=>{
+ const api=read("api/free-contracts.js");
+ assert.ok(api.includes("years??10"));
+ assert.ok(api.includes("minVolume??10"));
+ assert.ok(api.includes("[2,5,10].includes(years)"));
+ assert.ok(api.includes("[1,10,100].includes(minVolume)"));
+ assert.ok(api.includes("x.volume>=minVolume"));
+ assert.ok(api.includes('private,no-store'));
+});
