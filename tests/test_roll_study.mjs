@@ -111,3 +111,15 @@ test("quality gate enforces chronological purge and rewards only sufficiently sp
  assert.equal(q.exchangeSettlementCertified,false);
  assert.throws(()=>gate({train:[{entry:"2025-02-23",exit:"2025-03-02"}],holdout,splitDate:"2025-03-01"}),/Leakage/);
 });
+
+test("frozen holdout boundary remains fixed when earlier contract dates are added",()=>{
+ const baseline=lab.study(p,q,data,roll,{lookback:104,rollDays:5,fixedSplitDate:"2026-07-01"});
+ assert.equal(baseline.splitDate,"2026-07-01");
+ assert.equal(baseline.holdoutFixedForComparison,true);
+ assert.equal(baseline.rows.length,25);
+ assert.ok(baseline.rows.every(x=>x.inSample.trades+x.outOfSample.trades+x.quality.excludedCrossSplit===x.combined.trades));
+ const normal=lab.study(p,q,data,roll,{lookback:104,rollDays:5});
+ assert.equal(normal.holdoutFixedForComparison,false);
+ assert.throws(()=>lab.study(p,q,data,roll,{lookback:104,fixedSplitDate:"2025-07-03"}),/at least ten/);
+ assert.throws(()=>lab.study(p,q,data,roll,{lookback:104,fixedSplitDate:"2027-02-01"}),/at least ten/);
+});

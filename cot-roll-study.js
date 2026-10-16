@@ -115,7 +115,14 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
  const {cot,signals,excluded,releaseSources,firstCot,lastCot}=generate(primaryRaw,oppositeRaw,data,options);
  const dates=data.dates;
  if(dates.length<3)throw Error("Insufficient contract-specific prices");
- const splitDate=dates[Math.floor(dates.length*.7)];
+ const automaticSplit=dates[Math.floor(dates.length*.7)];
+ const splitDate=options.fixedSplitDate||automaticSplit;
+ if(options.fixedSplitDate){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(splitDate)||Number.isNaN(Date.parse(splitDate+"T00:00:00Z")))
+   throw Error("Invalid fixed chronological holdout date");
+  const before=dates.filter(d=>d<splitDate).length,after=dates.length-before;
+  if(before<10||after<10)throw Error("Fixed holdout requires at least ten observed quote dates on EACH side");
+ }
  const out=[];
  for(const strategy of STRATEGIES){
   for(const horizonWeeks of HORIZONS){
@@ -166,6 +173,7 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    moneyUnits:"Hypothetical USD P&L per specified number of futures contracts, NOT return on invested capital.",
    multipleTestingWarning:"25 predefined configurations carry multiplicity and selection risk; EXPLORATORY_ONLY does not mean PIT confirmed.",
    holdoutMethod:"PURGED_CHRONOLOGICAL_BY_ENTRY_EXIT: training exits strictly before split, holdout entries on/after split, boundary-spanning trades excluded from both subsets.",
+   holdoutFixedForComparison:!!options.fixedSplitDate,
    root:data.marketRoot,contractCount:data.contracts,quoteRows:data.bars.length,
    firstPrice:dates[0],lastPrice:dates.at(-1),firstCot,lastCot,excludedReleaseReports:excluded,releaseSources,splitDate,
    options,strategies:STRATEGIES,rows:out,
