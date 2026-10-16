@@ -61,6 +61,6 @@ It accepts up to 24 user-selected CSV files (up to 30MB aggregate), checks exact
 
 ## Verified pre-acquisition baseline
 
-At 2026-10-16 the primary ES input included 521 TFF weekly reports, 213 individual-expiry close proxies spanning 2025/26, and 44 hypothetical scenario outcomes across 25 configurations but only **12 distinct priced COT observation dates**. This is NOT a count of independent trades. None of 25 cells meets the study sufficiency gate. The old reference value used a varying 70/30 split; always recalculate both reference and new datasets with the fixed holdout date rather than compare incompatible subsets.
+At 2026-10-16 the primary ES input included 521 TFF weekly reports, 213 individual-expiry close proxies spanning 2025/26, and 44 hypothetical scenario outcomes across 25 configurations but only **12 distinct priced COT observation dates**. This is NOT a count of independent trades. None of 25 cells meets the study sufficiency gate. Independent replay with the **same fixed holdout 2026-07-01** confirms exactly 12 distinct priced COT report dates, 2 distinct in holdout, 44 repeated simulated scenario outcomes and 0/25 qualified cells. When new source files are acquired, recompute BOTH inputs with the identical fixed date.
 
 **Current 2023/24 ES data acquired: zero verified individual contract-day observations.**
