@@ -5,7 +5,7 @@
 <div class="eyebrow">COT ATLAS / PRIVATE EMPIRICAL RESEARCH / v0.9</div>
 <h1>COT signali × <em>stvarni futures ugovori</em></h1>
 <p>Spoji povijesne CFTC pozicije s cijenama pojedinačnih dospijeća. Svaka hipotetska trgovina koristi isti ugovor do rolla; cijena sljedećeg ugovora ne računa se kao profit ili gubitak.</p>
-<div class="notice"><strong>Ograničenja istraživanja:</strong> Yahoo pruža dnevne zaključne cijene, NE službene settlemente; CFTC povijest može biti naknadno ispravljena. Datum objave uglavnom pretpostavljamo petkom, a poremećeni izvještaji od 30. 9. 2025. do 20. 1. 2026. isključeni su. Nema potvrđenih izvršnih cijena, punog PIT-a ni pouzdanih strategijskih prinosa iz kratkih i nepotpunih povijesti dospijeća.</div>
+<div class="notice"><strong>Ograničenja istraživanja:</strong> Yahoo pruža dnevne zaključne cijene, NE službene settlemente; CFTC povijest može biti naknadno ispravljena. Za 2025. nadoknađene izvještaje koristimo službeni posebni kalendar, a za 2026. službeni okvirni kalendar CFTC-a. Za ostale standardne datume ostaje izričito označena pretpostavka petka. Nema potvrđenih izvršnih cijena, punog PIT-a ni pouzdanih strategijskih prinosa iz kratkih i nepotpunih povijesti dospijeća.</div>
 <section class="panel"><h2>Konfiguracija</h2>
 <div class="controls">
 <label>Ugovor<select id="market"></select></label>
@@ -25,7 +25,7 @@
 <div class="detail"><section class="panel"><h2 id="detailTitle">Detaljni pregled</h2><div id="details" class="kpis" style="grid-template-columns:repeat(2,minmax(120px,1fr))"></div><div class="tablewrap" id="recent"></div></section>
 <section class="panel"><h2>Izvori i metodologija</h2><div id="provenance" class="small"></div><h2 style="margin-top:20px">Nedostajući podaci</h2><div id="diagnostics" class="small"></div></section></div></div>
 <footer class="foot">Podaci iz privatnog API-ja za cijene pojedinačnih dospijeća i službene povijesne CFTC baze. Nije investicijska preporuka. Ne postoji automatska tržišna kupnja ili prodaja.</footer>
-</main><script src="/contract-roll-engine.js"></script><script src="/cot-roll-study.js"></script><script>
+</main><script src="/contract-roll-engine.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-roll-study.js"></script><script>
 const $=x=>document.getElementById(x),esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const marketData=[
  ["GC","088691","Zlato"],["SI","084691","Srebro"],["HG","085692","Bakar"],["PL","076651","Platina"],
@@ -91,11 +91,11 @@ function render(){
   '<li>Nedostajuća cijena za završetak: '+d.noExit+'</li>'+
   '<li>Nedostajuća cijena držanog ugovora / nevaljan roll: '+d.missingContractBars+'</li>'+
   '<li>Preklopljene pozicije: '+d.overlap+'</li></ul>'+
-  '<p>Izvještaji s neprovjerenim datumima iz poremećenog razdoblja isključeni: '+r.excludedReleaseReports+'</p>';
+  '<p>Izvještaji bez sigurnog datuma, isključeni: '+r.excludedReleaseReports+'</p>';
  $("provenance").innerHTML='<p><strong>CFTC:</strong> '+esc(r.positionSource)+' ('+esc(source.report)+' / '+esc(source.category)+' naspram '+esc(source.counterpart)+')</p>'+
  '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
  '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
- '<p><strong>Datum signala:</strong> COT utorak; ulaz tek nakon pretpostavljenog petka. Publikacija nije provjerena po svakom izvještaju.</p>'+
+ '<p><strong>Datum signala:</strong> COT izvještaj: ulaz tek NAKON planirane objave prema CFTC-u ili izričito označenoj pretpostavci petka za starije datume.</p>'+
  '<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
  '<p><strong>SHA-256 primarnih COT redaka:</strong> '+esc(source.inputHashes.primaryCot)+'</p>'+
  '<p><strong>SHA-256 referentnog COT niza:</strong> '+esc(source.inputHashes.counterpartCot)+'</p>'+
