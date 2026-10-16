@@ -20,7 +20,7 @@ test("private per-expiry feed includes contract-specific symbols across 13 marke
 test("free contract feed excludes post-expiry prices and volume-zero quotes",()=>{
  const api=read("api/free-contracts.js");
  assert.match(api,/x\.date<=c\.expiry/);
- assert.match(api,/x\.volume>0/);
+ assert.match(api,/x\.volume>=minVolume/);
  assert.match(api,/if\(!conf\)return res\.status\(400\)/);
  assert.match(api,/licensedExchangeSettlements:false/);
 });
