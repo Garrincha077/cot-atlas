@@ -247,3 +247,23 @@ All four pinned ES files plus the SHA-pinned Hugging Face NQ 2026 daily Parquet 
 `.github/workflows/source-watch.yml` runs Mon/Wed/Sat at 11:47 UTC (after the Saturday backup CFTC archive job), and can be manually dispatched. It downloads inputs in the GitHub Actions runner **only to calculate SHA-256**, without persisting or uploading any third-party price bars. On a mismatch, timeout, missing dataset or stale archive, the workflow fails and opens a single GitHub issue `[source-watch] COT Atlas data integrity alert`. While the issue is open, repeated failures do not create duplicates; successful recovery closes it. The user can optionally integrate GitHub Issue notifications with Telegram separately.
 
 CI includes offline regression tests for checksum pinning, tampered ES fixtures, source availability and CFTC freshness. The monitor is **not** a proof of trading data origin, completeness, licensing or executable P&L. Third-party source access remains subject to applicable terms. It is deliberately independent of Vercel's free deployment daily limits.
+
+
+## v1.6 — Private pre-2025 per-expiry import + calendar-year COT/price coverage
+
+[Open private Research Lab](https://cot-atlas-git.vercel.app/roll-research.html). A local-only *historical futures price CSV* option now joins CFTC positioning from the server without sending the futures CSV over any network API. The browser reads a selected file via `File.text()`, validates and replays it only in JS memory. The price CSV data are not committed to GitHub or saved in Vercel storage.
+
+CSV header: `date,root,contract,expiry,settle,multiplier,tick_size,volume`. Here `settle` is the **source-recorded price for that actual expiry**, not a certificate of official exchange settlement. Use actual independently sourced rows only; never fabricate price history, unlabelled roll series or vendor rights. Maximum file size 30 MB. For ES or NQ, the expiry must be an explicit quarterly futures code such as `ESZ24` or `NQU24`, with the right expiration year and month; reject raw/root continuous tickers, per-contract dates beyond expiry, duplicate contract-date observations, inconsistent multiplier/tick sizes, missing reported volume, and non-tradable-price tick steps. Both ES and NQ are checked at 0.25 tick; multipliers are $50/point ES and $20/point NQ.
+
+The market-source input menu still preserves ES community-labelled CSV, NQ sample Parquet, and Yahoo private on-demand sources. Use `LOCAL_BROWSER_ONLY` for historical files when actually obtained. The output includes file SHA-256, separate COT SHA-256 hashes, local validation rejection counts, an explicit unverified provenance label, and downloadable **statistics/metadata only**, never the raw futures CSV rows.
+
+A new annual matrix exposes the exact number of weekly COT reports vs **unique days containing actual expiry-specific price bars** and number of individual expiry contracts per year, with `NO_PRICE_SOURCE` or `SPARSE` labels. It also counts distinct Tuesday COT report dates with at least one priced hypothetical trade separately from raw trade × horizon combinations; even unique COT dates can create overlapping positions and are not independent trades.
+
+Verified on official CFTC 10-year TFF history and two currently available price sources (as of 2026-10-16):
+
+- ES: 521 COT reports, 213 contract-day close proxies, 44 strategy×horizon hypothetical event completions but only **12 distinct COT signal dates**, of which **2 distinct** fall in holdout.
+- NQ: 521 COT reports, 459 contract-day closes, 39 strategy×horizon hypothetical event completions but only **7 distinct COT signal dates**, with **zero distinct** in holdout.
+- Both ES and NQ: 2016–2024 historical COT records but ZERO available quotes from those years in the current existing source feeds. This does NOT mean historical data do not exist with other vendors.
+- Zero of 25 tested strategies pass the previously established evidence gates. A longer archival span without explicit expiry-specific prices does NOT justify profitability or PIT claims.
+
+All import validation and yearly matrix code is pure browser JS in `private-expiry-import.js`; `tests/test_private_expiry_import.mjs` prevents regressions. The existing v1.2 scientific fail-closed rules (publication release timing, no missing-price forward-fill, no artificial roll spread gain, chronological purge, quality sufficiency tests) remain in force.
