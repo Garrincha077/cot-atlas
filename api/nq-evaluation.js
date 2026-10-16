@@ -3,6 +3,7 @@
 // No downloaded prices stored in the public repo or on persistent server storage.
 import {createHash} from "node:crypto";
 import {parquetReadObjects} from "hyparquet";
+import {compressors} from "hyparquet-compressors";
 const SOURCE="https://huggingface.co/datasets/lynx1231/historical-equity-index-futures-data-sample/resolve/main/data/daily/part-00000.parquet";
 const DATASET="lynx1231/historical-equity-index-futures-data-sample";
 const EXPECTED_SHA256="9d663cf2425e5f11c19a4d5292c75e6bfec96880e28d7446897f165d6f1bffb6";
@@ -66,7 +67,7 @@ export default async function handler(req,res){
   if(bytes.length>LIMIT_BYTES||bytes.length<3000)throw Error("Unexpected Parquet sample size");
   const sha=createHash("sha256").update(bytes).digest("hex");
   if(sha!==EXPECTED_SHA256)throw Error("Sample SHA-256 has changed; data quarantined until reviewed");
-  const data=await parquetReadObjects({file:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)});
+  const data=await parquetReadObjects({file:bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),compressors});
   const normalized=normalizeNQDaily(data,{earliest:cutoff.toISOString().slice(0,10),minVolume});
   if(normalized.rows.length<15)throw Error("Too few genuine traded days in NQ sample");
   res.setHeader("Cache-Control","private,no-store,max-age=0");
