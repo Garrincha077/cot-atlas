@@ -1,1 +1,1 @@
-{"version":2,"functions":{"api/cot.js":{"maxDuration":120}}}
+{"version":2,"functions":{"api/cot.js":{"maxDuration":120},"api/research.js":{"maxDuration":120}}}
