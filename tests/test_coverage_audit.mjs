@@ -77,3 +77,14 @@ test("coverage UI displays all 13 markets, source gaps, on-demand only, and pass
  assert.match(html,/\/contract-coverage.js/);
  assert.match(html,/\/contract-roll-engine.js/);
 });
+
+test("whole-market missing week cannot be treated as continuous tradable P&L",()=>{
+ const raw=fixture();
+ raw.rows=raw.rows.filter(x=>x.date<"2026-02-01"||x.date>"2026-02-20");
+ const head="date,root,contract,expiry,settle,multiplier,tick_size,volume";
+ const parsed=roll.parseCSV([head,...raw.rows.map(x=>[x.date,x.root,x.contract,x.expiry,x.price,x.multiplier,x.tick_size,x.volume].join(","))].join("\n"));
+ assert.throws(()=>roll.simulate(parsed,{start:"2026-01-22",end:"2026-03-09",rollDays:5}),/Market session gap/);
+ const audited=audit(raw,{rollEngine:roll,horizonWeeks:4,rollDays:5});
+ assert.ok(audited.rollAudit.failedCoverage>0);
+ assert.ok(audited.perContract.some(x=>x.maxCalendarGapDays>8));
+});
