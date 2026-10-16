@@ -1,0 +1,51 @@
+{
+  "source": "CFTC Public Reporting",
+  "generated_at": "2026-10-16T09:09:19.905689+00:00",
+  "since": "2024-10-11",
+  "position_rows": 579789,
+  "datasets": [
+    {
+      "report": "disagg_fut",
+      "source_rows": 27691,
+      "positions_processed": 138455,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "disagg_comb",
+      "source_rows": 28343,
+      "positions_processed": 141715,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "tff_fut",
+      "source_rows": 7964,
+      "positions_processed": 39820,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "tff_comb",
+      "source_rows": 7966,
+      "positions_processed": 39830,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "legacy_fut",
+      "source_rows": 35655,
+      "positions_processed": 106965,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "legacy_comb",
+      "source_rows": 36316,
+      "positions_processed": 108948,
+      "latest_report": "2026-10-06"
+    },
+    {
+      "report": "supplemental",
+      "source_rows": 1352,
+      "positions_processed": 4056,
+      "latest_report": "2026-10-06"
+    }
+  ],
+  "point_in_time_verified": false
+}
