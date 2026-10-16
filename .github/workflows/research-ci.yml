@@ -24,6 +24,8 @@ on:
       - 'tests/test_nq_evaluation.mjs'
       - 'scripts/check_source_integrity.mjs'
       - 'tests/test_source_integrity.mjs'
+      - 'private-expiry-import.js'
+      - 'tests/test_private_expiry_import.mjs'
       - '.github/workflows/source-watch.yml'
       - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
@@ -60,6 +62,8 @@ on:
       - 'tests/test_nq_evaluation.mjs'
       - 'scripts/check_source_integrity.mjs'
       - 'tests/test_source_integrity.mjs'
+      - 'private-expiry-import.js'
+      - 'tests/test_private_expiry_import.mjs'
       - '.github/workflows/source-watch.yml'
       - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
@@ -92,4 +96,4 @@ jobs:
       - name: Install pinned Parquet parser
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Run offline market and research tests
-        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs tests/test_community_expiries.mjs tests/test_nq_evaluation.mjs tests/test_source_integrity.mjs
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs tests/test_community_expiries.mjs tests/test_nq_evaluation.mjs tests/test_source_integrity.mjs tests/test_private_expiry_import.mjs
