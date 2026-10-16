@@ -52,10 +52,12 @@ $("run").onclick=async()=>{
  const [market,primary,other]=await Promise.all([json("/api/free-contracts?root="+root),json(q(cat)),json(q(counterpart))]);
  if(root!==$("market").value||report!==$("report").value||cat!==$("category").value)throw Error("Odabir se promijenio tijekom dohvata; pokreni ponovno");
  const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source="Yahoo per-expiry dnevni CLOSE, zadnje trgovanje prema IBKR (2026-10-16)";
+ const fingerprint=async input=>{const buffer=new TextEncoder().encode(JSON.stringify(input));const sha=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(sha)].map(n=>n.toString(16).padStart(2,"0")).join("")};
+ const inputHashes={prices:await fingerprint(market.rows),primaryCot:await fingerprint(primary.rows),counterpartCot:await fingerprint(other.rows)};
  result=window.COT_ROLL_STUDY.study(primary.rows,other.rows,data,window.COT_ROLL_ENGINE,{
   lookback:Number($("window").value),rollDays:Number($("rollDays").value),method:$("method").value,
   commissionPerSide:Number($("commission").value),slippageTicks:Number($("slippage").value),contracts:1});
- source={market,primary,other,root,code,report,category:cat,counterpart};horizon=4;selected="extreme_reversal";render();
+ source={root,code,report,category:cat,counterpart,primaryRows:primary.rows.length,priceRows:market.rows.length,inputHashes,marketSource:market.priceBasis,archiveSha:primary.snapshotSHA256};horizon=4;selected="extreme_reversal";render();
  $("download").disabled=false;$("status").textContent="Izračunano svih 25 kombinacija na dostupnom dijelu povijesti. Zapisano u memoriji preglednika.";
  }catch(e){$("status").textContent="Nije moguće dovršiti analizu: "+e.message;$("result").style.display="none"}
  finally{b.disabled=false}
@@ -64,7 +66,7 @@ function render(){
  if(!result)return;$("result").style.display="block";
  const r=result,available=r.rows.filter(x=>x.horizonWeeks===horizon),valid=r.rows.filter(x=>x.outOfSample.trades>=8);
  const combined=r.rows.filter(x=>x.horizonWeeks===4).reduce((s,x)=>s+x.diagnostics.eligible,0);
- $("kpis").innerHTML=metricsCard("COT opažanja",fmt(source.primary.rows.length,0),r.firstCot+" → "+r.lastCot)+
+ $("kpis").innerHTML=metricsCard("COT opažanja",fmt(source.primaryRows,0),r.firstCot+" → "+r.lastCot)+
  metricsCard("Ugovor–dan cijene",fmt(r.quoteRows,0),r.firstPrice+" → "+r.lastPrice)+
  metricsCard("Izvedive trgovine, 4W",fmt(combined,0),"zbroj strategija, mogu se preklapati")+
  metricsCard("Konfiguracije s ≥8 holdout",fmt(valid.length,0),"od 25 ukupno");
@@ -94,8 +96,11 @@ function render(){
  '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
  '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
  '<p><strong>Datum signala:</strong> COT utorak; ulaz tek nakon pretpostavljenog petka. Publikacija nije provjerena po svakom izvještaju.</p>'+
+ ''<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
+ '<p><strong>SHA-256 primarnih COT redaka:</strong> '+esc(source.inputHashes.primaryCot)+'</p>'+
+ '<p><strong>SHA-256 referentnog COT niza:</strong> '+esc(source.inputHashes.counterpartCot)+'</p>'+
  '<p><strong>Troškovi:</strong> '+r.options.commissionPerSide+' USD po strani + '+r.options.slippageTicks+' ticka po strani po jednom ugovoru, uz '+r.options.method+' pravilo.</p>'+
  '<p><strong>Zaključak:</strong> 25 testiranih kombinacija stvara rizik višestrukog testiranja. Bez ≥8 trgovina u holdoutu ne rangiramo strategije.</p>';
 }
-$("download").onclick=()=>{if(!result)return;const blob=new Blob([JSON.stringify({...result,source:{root:source.root,code:source.code,report:source.report,category:source.category,other:source.counterpart}},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cot-roll-study-"+source.root+".json";a.click();URL.revokeObjectURL(a.href)};
+$("download").onclick=()=>{if(!result)return;const blob=new Blob([JSON.stringify({...result,source:{root:source.root,code:source.code,report:source.report,category:source.category,other:source.counterpart,inputHashes:source.inputHashes,archiveSha:source.archiveSha}},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cot-roll-study-"+source.root+".json";a.click();URL.revokeObjectURL(a.href)};
 </script></body></html>
