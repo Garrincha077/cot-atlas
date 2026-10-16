@@ -4,11 +4,11 @@
 import {createHash} from "node:crypto";
 
 const BASE="https://raw.githubusercontent.com/kfccolonel1/BARS/main/raw/ES/1min/ib/";
-const SOURCES=[
- {contract:"ESH26",tag:"ESH6",expiry:"2026-03-20",file:"ES_1min_2025-12-23_2026-03-17_ibkr-ESH6.csv"},
- {contract:"ESM26",tag:"ESM6",expiry:"2026-06-18",file:"ES_1min_2026-03-08_2026-06-16_ibkr-ESM6.csv"},
- {contract:"ESU26",tag:"ESU6",expiry:"2026-09-18",file:"ES_1min_2026-06-07_2026-09-15_ibkr-ESU6.csv"},
- {contract:"ESZ26",tag:"ESZ6",expiry:"2026-12-18",file:"ES_1min_2026-09-01_2026-10-02_ibkr-ESZ6.csv"}
+export const SOURCES=[
+ {contract:"ESH26",tag:"ESH6",expiry:"2026-03-20",file:"ES_1min_2025-12-23_2026-03-17_ibkr-ESH6.csv",sha256:"1eb65d28a42f6a4aadb59607f354f306abfba67ba11dce2d00b23a56ab0c89a3"},
+ {contract:"ESM26",tag:"ESM6",expiry:"2026-06-18",file:"ES_1min_2026-03-08_2026-06-16_ibkr-ESM6.csv",sha256:"9dd593a8800fd2577b055115d9417e4a7f6ec8aa72b9c4334dae09df4f22c258"},
+ {contract:"ESU26",tag:"ESU6",expiry:"2026-09-18",file:"ES_1min_2026-06-07_2026-09-15_ibkr-ESU6.csv",sha256:"26fda76b0579b073b3d25025dcc7473f3811b48cb875b0817c690addddaa3aee"},
+ {contract:"ESZ26",tag:"ESZ6",expiry:"2026-12-18",file:"ES_1min_2026-09-01_2026-10-02_ibkr-ESZ6.csv",sha256:"230d66252410c5683460ca3353fa262cbcb744451d3f0333c4252f5786fc464a"}
 ];
 const MAX_BYTES=9500000, MAX_ROWS=130000;
 const shiftDay=x=>new Date(Date.parse(x+"T00:00:00Z")+86400000).toISOString().slice(0,10);
@@ -56,8 +56,10 @@ async function retrieve(source,opts){
   if(size>MAX_BYTES)throw Error("source file exceeds safety cap");
   const bytes=Buffer.from(await response.arrayBuffer());
   if(bytes.length>MAX_BYTES)throw Error("source file too large");
+  const actualSha256=createHash("sha256").update(bytes).digest("hex");
+  if(!source.sha256||actualSha256!==source.sha256)throw Error("ES source SHA-256 changed: contract quarantined until reviewed");
   const parsed=parseMinuteCSV(bytes.toString("utf8"),source,opts);
-  parsed.metadata.sourceFileSha256=createHash("sha256").update(bytes).digest("hex");
+  parsed.metadata.sourceFileSha256=actualSha256;
   parsed.metadata.sourceFile=source.file;
   if(!parsed.data.length)parsed.metadata.reason="No complete daily sessions matching explicit contract label, volume and closing-minute criteria";
   return parsed;
@@ -65,14 +67,14 @@ async function retrieve(source,opts){
    sourceFile:source.file,available:false,reason:String(e.message||e).slice(0,170)}}}
  finally{clearTimeout(timer)}
 }
-export default async function handler(req,res){
+export function createHandler(sourceList=SOURCES){return async function handler(req,res){
  if(req.method!=="GET")return res.status(405).json({error:"GET only"});
  const root=String(req.query.root||"ES").toUpperCase(),years=Number(req.query.years??10),minVolume=Number(req.query.minVolume??10);
  if(root!=="ES")return res.status(400).json({error:"Community exact-expiry source currently covers ES only; NQ files lack validated contract labels."});
  if(![2,5,10].includes(years)||![1,10,100].includes(minVolume))return res.status(400).json({error:"years 2/5/10, minVolume 1/10/100 required"});
  const cutoff=new Date();cutoff.setUTCFullYear(cutoff.getUTCFullYear()-years);
  const earliest=cutoff.toISOString().slice(0,10);
- const fetched=await Promise.all(SOURCES.map(s=>retrieve(s,{minVolume,earliest})));
+ const fetched=await Promise.all(sourceList.map(s=>retrieve(s,{minVolume,earliest})));
  const data=fetched.flatMap(x=>x.data).sort((a,b)=>a.date.localeCompare(b.date)||a.expiry.localeCompare(b.expiry));
  const contracts=fetched.map(x=>({...x.metadata,earliest:x.metadata.first||null,latest:x.metadata.last||null}));
  if(data.length<10)return res.status(503).json({error:"Verified-by-label community ES source currently unavailable or too sparse",contracts});
@@ -90,3 +92,5 @@ export default async function handler(req,res){
   "No COT vintage verification and no confirmation of executable fills. Raw data not persisted on this service."]
  });
 }
+}
+export default createHandler();
