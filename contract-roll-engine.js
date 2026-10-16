@@ -84,7 +84,12 @@ function simulate(data,opts={}){
  }
  for(let index=0;index<dates.length;index++){
   const date=dates[index],quotes=byDate.get(date);
-  if(index>0&&days(dates[index-1],date)>6)anomalies.push("Gap of "+days(dates[index-1],date)+" calendar days before "+date);
+  if(index>0){
+   const gap=days(dates[index-1],date);
+   // No price information about the HELD position can be safely interpolated across an entire missing week.
+   if(gap>8)throw Error("Market session gap of "+gap+" calendar days before "+date+" (missing history; no forward-fill)");
+   if(gap>6)anomalies.push("Gap of "+gap+" calendar days before "+date);
+  }
   if(index===0){
    held=firstEligible(quotes,date,rollDays);
    if(!held)throw Error("No eligible contract with expiry more than "+rollDays+" days away on entry date");
