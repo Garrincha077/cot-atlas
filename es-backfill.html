@@ -1,0 +1,78 @@
+<!doctype html><html lang="hr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>COT Atlas — ES 2023–24 source audit</title><meta name="description" content="Privatna provjera osam stvarnih ES ugovora iz 2023.–2024. i utjecaja povijesnih cijena na COT backtest."><style>
+:root{--bg:#0a151b;--panel:#13252c;--border:#34515b;--text:#e8f4ee;--sub:#a3bbbc;--mint:#91dfb5;--orange:#f4c694}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.56 system-ui,Segoe UI,sans-serif}main{max-width:1450px;margin:0 auto;padding:24px clamp(14px,3vw,44px) 45px}a{color:var(--mint)}nav{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:22px}h1{font:600 clamp(30px,3.5vw,48px)/1.12 Georgia,serif;margin:5px 0 9px}h1 em{color:var(--mint);font-style:italic}h2{font-size:17px;margin:0 0 14px}.eyebrow{font-size:11px;letter-spacing:1.9px;font-weight:800;color:var(--mint)}p,small{color:var(--sub)}.panel{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:21px;margin:16px 0}.warn{background:#302a20;border:1px solid #766248;color:#ffe3ba;border-radius:10px;padding:13px 15px}.controls{display:flex;gap:15px;align-items:end;flex-wrap:wrap}.controls label{color:var(--sub);font-size:12px;min-width:155px;display:flex;flex-direction:column;gap:6px}.controls input,.controls select{border:1px solid #466b70;border-radius:8px;background:#162f35;color:var(--text);padding:10px;font:inherit}.controls input[type="file"]{max-width:min(370px,100%)}button{border:0;background:var(--mint);color:#0d3026;border-radius:9px;font:750 13px system-ui;cursor:pointer;padding:11px 16px}button:disabled{opacity:.5;cursor:default}.secondary{background:#24434b;color:var(--mint);border:1px solid var(--border)}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}th,td{padding:9px 11px;border-bottom:1px solid var(--border);text-align:left}th{font-size:10px;color:var(--sub);letter-spacing:.5px}td{font-variant-numeric:tabular-nums}.good{color:#8ce6b2}.bad{color:var(--orange)}.dim{color:var(--sub)}.cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metric{border:1px solid var(--border);border-radius:10px;padding:12px;background:#1a343b}.metric small{display:block;font-size:10px}.metric strong{font-size:24px}.state{font-size:12px;color:var(--sub)}#output{display:none}.source{font-size:12px}code{color:#bef1d4}footer{margin-top:20px;font-size:11px;color:var(--sub)}@media(max-width:900px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.cols{grid-template-columns:1fr 1fr}.panel{padding:12px}.controls label{width:100%}}
+</style></head><body><main><nav><a href="/">◈ COT Atlas</a><a href="/roll-research.html">COT × Futures Research</a><a href="/coverage.html">Futures Coverage</a><a href="/history.html">CFTC povijest</a></nav>
+<div class="eyebrow">DATA INTEGRITY / HISTORICAL CONTRACT ACQUISITION</div><h1>ES <em>Backfill Lab</em> · 2023–2024</h1><p>Prvo dokazujemo dostupnost cijena za osam izričito označenih ES ugovora. Tek zatim mjerimo koliko se povećao broj različitih COT datuma koje je moguće povezati sa stvarnim ugovornim cijenama.</p>
+<div class="warn"><strong>Status izvora:</strong> još nije pribavljena kompletna, provjerena besplatna povijest 2023.–2024. CME ima službene settlemente i DataMine arhivu, ali pristup starim datotekama može zahtijevati prijavu, licencu ili plaćanje. Nikakvi kontinuirani tickeri, ETF cijene, nepostojeće kotacije ni ugovorne razlike neće biti umetnuti umjesto stvarne povijesti.</div>
+<section class="panel"><h2>1 · Privatni ulaz stvarnih ugovora</h2><p class="source">Učitaj do 24 CSV datoteke, svaku iz stvarnog izvora s oznakom ugovora. Možeš učitati više datoteka za isti ugovor ako ne dijele iste datume. Cijene se učitavaju <strong>isključivo u pregledniku</strong> i ne šalju na Vercel ni u GitHub.</p>
+<div class="controls"><label style="flex:2;min-width:240px">CSV datoteke (2023.–2025.)<input id="files" type="file" accept=".csv,text/csv" multiple></label><label>Minimalni dnevni volumen<select id="minVolume"><option value="1">1</option><option value="10" selected>10</option><option value="100">100</option></select></label><label style="flex:2;min-width:200px">Podrijetlo datoteka (opis)<input id="origin" type="text" placeholder="npr. vlastiti licencirani izvoz (bez tajnih podataka)"></label><label>Zamrznuti holdout početak<input type="text" value="2026-07-01" disabled></label></div>
+<p class="source">Format: <code>date,root,contract,expiry,settle,multiplier,tick_size,volume</code>. Vrijednost <code>settle</code> tretira se kao cijena koju je izvor prijavio, a ne kao dokaz službenog CME settlementa. Očekivano: <code>ESZ23</code>, <code>ESH24</code> itd., <code>multiplier=50</code>, <code>tick_size=0.25</code>. Izvor i dopuštenja za korištenje moraju se provjeriti zasebno. Sama provjera CSV-a ne potvrđuje autentičnost ni izvršivost cijena.</p>
+<div class="controls"><button id="run">Provjeri pokrivenost i usporedi COT</button><button id="download" class="secondary" disabled>Izvezi sažetak (bez cijena)</button></div><p id="status" class="state">Bez učitanog CSV-a prikazat će se stvarna postojeća ES baza i popis nedostajućih ugovora.</p></section>
+<section class="panel"><h2>2 · Obvezna dospijeća</h2><p>Osam kvartalnih ES ugovora iz 2023.–2024. i četiri dodatna iz 2025. za kasnije povezivanje povijesti. Datumi su prema CME pravilu trećeg petka. Oznake READY_FOR_REVIEW znače samo da zapisani podaci prolaze osnovnu provjeru broja dana i praznina.</p><div class="tablewrap"><table><thead><tr><th>UGOVOR</th><th>DATUM ISTEKA</th><th>CIJENE U AKTIVNOM KVARTALU</th><th>PRVI / ZADNJI DAN</th><th>NAJVEĆA PAUZA</th><th>STATUS</th></tr></thead><tbody id="contracts"></tbody></table></div></section>
+<div id="output">
+<section class="panel"><h2>3 · Promjena stvarne istraživačke pokrivenosti</h2><div class="cols" id="metrics"></div><p class="source" id="evidence"></p><div class="tablewrap"><table><thead><tr><th>GODINA</th><th>COT IZVJEŠTAJI</th><th>PRIJAVLJENI DANI UGOVORNIH CIJENA</th><th>DOSPIJEĆA</th><th>RAZLIČITI COT DATUMI S TRGOVINOM</th></tr></thead><tbody id="years"></tbody></table></div></section>
+<section class="panel"><h2>Podrijetlo i metodološke granice</h2><div id="provenance" class="source"></div></section></div>
+<footer>Izvori: javna CFTC baza + zasebno označeni ES podaci. Proračuni u pregledniku, bez spremanja privatnih CSV-ova. I dalje vrijede CFTC revizije, višestruko testiranje i neprovjerenost izvršivih futures cijena.</footer></main>
+<script src="/contract-roll-engine.js"></script><script src="/private-expiry-import.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-quality-gates.js"></script><script src="/cot-roll-study.js"></script><script src="/es-backfill.js"></script>
+<script>
+const $=id=>document.getElementById(id),E=window.COT_ES_BACKFILL,eng=window.COT_ROLL_ENGINE,V=window.COT_LOCAL_PRICES;
+const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=x=>Number(x||0).toLocaleString("hr-HR");
+const sha=async text=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,"0")).join("");
+const barsCSV=rows=>[E.HEADER,...rows.map(x=>[x.date,"ES",x.contract,x.expiry,x.price,50,.25,x.volume].join(","))].join("\n");
+function drawContracts(data=null){$("contracts").innerHTML=E.coverage(data).map(c=>{
+ const status=c.status==="NO_SOURCE"?"NEDOSTAJE":c.status==="REVIEW_CANDIDATE"?"PROVJERITI IZVOR":c.status==="GAPS_REJECT"?"PREKIDI":"NEPOTPUNO";
+ return '<tr><td><strong>'+c.contract+'</strong> '+(c.required?"*":"")+'</td><td>'+c.expiry+'</td><td>'+fmt(c.activeRows)+'</td><td>'+(c.first||"—")+' / '+(c.last||"—")+'</td><td>'+fmt(c.biggestGap)+' dana</td><td class="'+(c.status==="REVIEW_CANDIDATE"?"good":"bad")+'">'+status+'</td></tr>';
+}).join("")}
+drawContracts();
+async function fetchJSON(url){const r=await fetch(url,{cache:"no-store"});const j=await r.json();if(!r.ok||j.error)throw Error(j.error||"HTTP "+r.status);return j}
+const opts={lookback:156,rollDays:5,method:"fixed",commissionPerSide:2,slippageTicks:1,contracts:1,fixedSplitDate:"2026-07-01"};
+let report=null;
+$("run").onclick=async()=>{
+ const button=$("run");button.disabled=true;$("download").disabled=true;$("output").style.display="none";$("status").textContent="Učitavam CFTC pozicioniranje i postojeću ugovornu ES bazu...";
+ try{
+  const fs=[...$("files").files||[]],min=Number($("minVolume").value),origin=$("origin").value.trim();
+  if(fs.length>24)throw Error("Najviše 24 CSV-a");
+  if(fs.length&&(!origin||origin.length<8))throw Error("Za stvarne povijesne datoteke navedi opis podrijetla (najmanje 8 znakova)");
+  if(fs.reduce((n,f)=>n+f.size,0)>30*1024*1024)throw Error("Ukupno najviše 30 MB CSV-ova");
+  const [primary,other,baseline]=await Promise.all([
+   fetchJSON("/api/core-history?report=tff_fut&category=leveraged_funds&code=13874A&years=10"),
+   fetchJSON("/api/core-history?report=tff_fut&category=asset_managers&code=13874A&years=10"),
+   fetchJSON("/api/community-expiries?root=ES&years=10&minVolume="+min)]);
+  const baselineData=V.validate(barsCSV(baseline.rows),eng,{selectedRoot:"ES",minimumVolume:min});
+  baselineData.source=baseline.priceBasis+" / SHA-pinned community source";baselineData.proxyPriceBasis=baseline.priceBasis;
+  const base=window.COT_ROLL_STUDY.study(primary.rows,other.rows,baselineData,eng,opts);
+  let mergedData=baselineData,parsed=null,comparison=null,proofs=[];
+  if(fs.length){
+   $("status").textContent="Provjeravam identitet dospijeća, cijene i ugovorne volumene lokalnih CSV-ova…";
+   const files=await Promise.all(fs.map(async f=>{const text=await f.text();proofs.push({file:f.name,sizeBytes:f.size,sha256:await sha(text)});return {name:f.name,text}}));
+   parsed=E.readFiles(files,eng,V,{minimumVolume:min});
+   drawContracts(parsed.data);
+   mergedData=E.merge(baselineData,parsed,eng,V,{minimumVolume:min});
+   const extended=window.COT_ROLL_STUDY.study(primary.rows,other.rows,mergedData,eng,opts);
+   comparison=E.compare(base,extended);
+  }else drawContracts();
+  const effective=E.summarizeStudy(comparison?{...base,...comparison.after,rows:base.rows}:base);
+  const summary=comparison?comparison.after:E.summarizeStudy(base);
+  const metrics=[
+   ["Pojedinačni ES ugovori 2023–24",E.coverage(parsed?.data).filter(c=>c.required&&c.status==="REVIEW_CANDIDATE").length+"/8","Triage, ne dokazana autentičnost"],
+   ["Različiti COT datumi",fmt(summary.uniqueReportDates),comparison?"Prije "+fmt(comparison.before.uniqueReportDates)+" · promjena "+fmt(comparison.changes.uniqueReportDates):"Postojeći ES izvor"],
+   ["Holdout različiti COT datumi",fmt(summary.uniqueHoldoutReportDates),comparison?"Prije "+fmt(comparison.before.uniqueHoldoutReportDates)+" · promjena "+fmt(comparison.changes.uniqueHoldoutReportDates):"Holdout 2026-07-01"],
+   ["Scenariji s dovoljnim uzorkom",fmt(summary.qualifyingExploratoryCells)+"/25","Bez tvrdnje o profitabilnosti"]];
+  $("metrics").innerHTML=metrics.map(x=>'<div class="metric"><small>'+esc(x[0])+'</small><strong>'+esc(x[1])+'</strong><small>'+esc(x[2])+'</small></div>').join("");
+  const sig=comparison?window.COT_ROLL_STUDY.study(primary.rows,other.rows,mergedData,eng,opts):base;
+  const sigByYear={};for(const date of sig.distinctCompletedCotReportDates){let year=date.slice(0,4);sigByYear[year]=(sigByYear[year]||0)+1}
+  const yearly=V.annual(primary.rows,mergedData);
+  $("years").innerHTML=yearly.map(y=>'<tr><td>'+y.year+'</td><td>'+fmt(y.cotReports)+'</td><td>'+fmt(y.uniquePriceDates)+'</td><td>'+fmt(y.individualContracts)+'</td><td>'+fmt(sigByYear[y.year]||0)+'</td></tr>').join("");
+  $("evidence").textContent="Sva 25 × trajanja / strategija dijele brojne COT datume i pozicije. Holdout je zamrznut na 2026-07-01 u oba izračuna. Nema pripisivanja umjetne zarade pri rollu. Rezultati NISU dokaz izvršivih trgovanja.";
+  $("provenance").innerHTML='<p>Osnovni ES izvor: '+esc(baseline.publisher||"community ES archive")+', '+fmt(baselineData.bars.length)+' dana po ugovoru. Dodane datoteke: '+fmt(fs.length)+'. Ukupni podatkovni redovi: '+fmt(mergedData.bars.length)+'.</p><p>Izvor prema tvojem opisu: '+esc(origin||"nema dodatne datoteke")+'. Verificiranost originalnog izvora: <strong>NE</strong>. Sam SHA potvrđuje identičnost učitanih bajtova, a ne pravo korištenja ili točnost tržišnih cijena.</p>';
+  report={checkedAt:new Date().toISOString(),root:"ES",minVolume:min,holdoutDate:opts.fixedSplitDate,
+   baseline:E.summarizeStudy(base),extended:comparison?.after||null,delta:comparison?.changes||null,
+   targetCalendar:E.coverage(parsed?.data),localFiles:proofs,originLabel:origin||null,localFileAudit:parsed?.manifest||[],
+   annualCoverage:yearly, distinctPricedCOTDates:summary.uniqueReportDates,
+   scientificWarnings:["No vendor data provenance certification","No as-published COT vintages","No execution certification","No proof of trading edge"]};
+  $("output").style.display="block";$("download").disabled=false;
+  $("status").textContent=fs.length?"Usporedba završena. CSV cijene ostale su u pregledniku; spreman je samo sažetak bez cijena.":"Osnovna provjera završena. Osam ugovora 2023–24 i dalje nedostaje dok ne učitaš stvarne povijesne datoteke.";
+ }catch(e){$("status").textContent="Provjera nije dovršena: "+String(e.message||e);$("output").style.display="none"}finally{button.disabled=false}
+};
+$("download").onclick=()=>{if(!report)return;const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cot-es-backfill-source-audit.json";a.click();URL.revokeObjectURL(a.href)};
+</script></body></html>
