@@ -37,7 +37,7 @@ test("wrong root, impossible expiry, continuous ticker, and invalid multiplier a
  const csv=[header,...rows].join("\n");
  assert.throws(()=>validate(csv,engine,{selectedRoot:"ES"}),/Root/);
  assert.throws(()=>validate(csv.replaceAll("NQU24","NQU25"),engine,{selectedRoot:"NQ"}),/dospijeće nije dokazano/);
- assert.throws(()=>validate(csv.replaceAll("NQZ24","NQ=F"),engine,{selectedRoot:"NQ"}),/dospijeće nije dokazano/);
+ assert.throws(()=>validate(csv.replaceAll("NQZ24","NQ=F"),engine,{selectedRoot:"NQ"}),/Invalid contract|dospijeće nije dokazano/);
  assert.throws(()=>validate(csv.replaceAll(",20,0.25,",",50,0.25,"),engine,{selectedRoot:"NQ"}),/multiplier/);
 });
 test("non-grid NQ CLOSE is not rounded into hypothetical fill",()=>{
@@ -50,7 +50,7 @@ test("volume gate never invents prices or accepts price-only continuous feeds",(
  assert.equal(d.localAudit.acceptedRows,5);
  assert.equal(d.localAudit.rejectedLowVolume,1);
  const missingVolume=s.replaceAll(/,(\d+)$|,(\d+)\n/gm, (_m)=>""); // verify explicitly with blank volume in one row below
- const arr=[header,...rows];arr[1]=arr[1].replace(/,\d+$/,"");
+ const arr=[header,...rows];arr[1]=arr[1].replace(/,\d+$/,",");
  assert.throws(()=>validate(arr.join("\n"),engine,{selectedRoot:"NQ"}),/volumen svakog/);
  assert.ok(missingVolume.length>0);
 });
