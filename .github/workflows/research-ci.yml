@@ -1,0 +1,41 @@
+name: COT Research Lab CI
+on:
+  pull_request:
+    paths:
+      - 'research.html'
+      - 'index.html'
+      - 'lib/**'
+      - 'api/research.js'
+      - 'tests/test_research_lab.mjs'
+      - 'tests/test_market_focus.mjs'
+      - '.github/workflows/research-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'research.html'
+      - 'index.html'
+      - 'lib/**'
+      - 'api/research.js'
+      - 'tests/test_research_lab.mjs'
+      - 'tests/test_market_focus.mjs'
+      - '.github/workflows/research-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Confirm runner Node version
+        run: |
+          node --version
+          node -e "if (parseInt(process.versions.node, 10) < 20) process.exit(1)"
+      - name: Run offline market and research tests
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs
