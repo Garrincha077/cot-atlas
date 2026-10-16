@@ -8,6 +8,8 @@ on:
       - 'scripts/build_core_history.py'
       - 'tests/test_core_archive.mjs'
       - 'roll-lab.html'
+      - 'api/free-contracts.js'
+      - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
       - 'tests/test_contract_roll.mjs'
       - 'index.html'
@@ -25,6 +27,8 @@ on:
       - 'scripts/build_core_history.py'
       - 'tests/test_core_archive.mjs'
       - 'roll-lab.html'
+      - 'api/free-contracts.js'
+      - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
       - 'tests/test_contract_roll.mjs'
       - 'index.html'
@@ -52,4 +56,4 @@ jobs:
           node --version
           node -e "if (parseInt(process.versions.node, 10) < 20) process.exit(1)"
       - name: Run offline market and research tests
-        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs
