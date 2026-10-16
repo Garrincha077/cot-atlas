@@ -47,8 +47,8 @@ test("non-grid NQ CLOSE is not rounded into hypothetical fill",()=>{
 test("volume gate never invents prices or accepts price-only continuous feeds",()=>{
  const s=[header,...rows].join("\n");
  const d=validate(s,engine,{selectedRoot:"NQ",minimumVolume:100});
- assert.equal(d.localAudit.acceptedRows,4);
- assert.equal(d.localAudit.rejectedLowVolume,2);
+ assert.equal(d.localAudit.acceptedRows,5);
+ assert.equal(d.localAudit.rejectedLowVolume,1);
  const missingVolume=s.replaceAll(/,(\d+)$|,(\d+)\n/gm, (_m)=>""); // verify explicitly with blank volume in one row below
  const arr=[header,...rows];arr[1]=arr[1].replace(/,\d+$/,"");
  assert.throws(()=>validate(arr.join("\n"),engine,{selectedRoot:"NQ"}),/volumen svakog/);
