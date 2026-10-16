@@ -16,18 +16,19 @@
 <label>Roll prije dospijeća<input id="rollDays" type="number" value="5" min="1" max="45" step="1"></label>
 <label>Provizija po strani (USD)<input id="commission" type="number" value="2" min="0" max="10000" step=".25"></label>
 <label>Slippage po strani (ticks)<input id="slippage" type="number" value="1" min="0" max="100" step=".5"></label>
-<label>ES/NQ izvor pojedinačnih ugovora<select id="priceProvider"><option value="community">Arhiva IBKR-označenih minutnih podataka (ES)</option><option value="nqeval">NQ — evaluacijski uzorak dospijeća</option><option value="yahoo">Yahoo dnevni close (usporedba)</option></select></label>
+<label>ES/NQ izvor pojedinačnih ugovora<select id="priceProvider"><option value="community">Arhiva IBKR-označenih minutnih podataka (ES)</option><option value="nqeval">NQ — evaluacijski uzorak dospijeća</option><option value="yahoo">Yahoo dnevni close (usporedba)</option><option value="local">Lokalni CSV — točan ugovor i dospijeće</option></select></label>
 <label>Povijest dospijeća<select id="priceYears"><option value="2">2 godine</option><option value="5">5 godina</option><option value="10" selected>10 godina (ako dostupno)</option></select></label><label>Min. dnevni volumen<select id="minVolume"><option value="1">1 ugovor</option><option value="10" selected>10 ugovora</option><option value="100">100 ugovora</option></select></label>
-</div><div class="actions"><button id="run">▶ Spoji COT i ugovorne cijene</button><button id="download" class="secondary" disabled>Preuzmi rezultate JSON</button></div><p class="status" id="status">Svaki rezultat računa se na zahtjev; tržišne cijene nisu pohranjene u javnom GitHub repozitoriju.</p></section>
+</div><div class="actions"><label for="localCsvFile" style="color:var(--dim);font-size:12px">Privatni CSV (samo za lokalni izvor) <input type="file" id="localCsvFile" accept=".csv,text/csv" style="display:block;margin-top:5px"></label><button id="run">▶ Spoji COT i ugovorne cijene</button><button id="download" class="secondary" disabled>Preuzmi rezultate JSON</button></div><p class="status" id="status">Svaki rezultat računa se na zahtjev; tržišne cijene nisu pohranjene u javnom GitHub repozitoriju.</p></section>
 <div id="result">
 <div class="kpis" id="kpis"></div>
+<section class="panel"><h2>Godišnja pokrivenost COT-a i stvarnih cijena</h2><p class="small">Bez procjene i popunjavanja praznina. Broj opaženih cijena nije broj izvršivih naloga ni stvarnih COT trgovanja.</p><div class="tablewrap"><table style="min-width:700px"><thead><tr><th>GODINA</th><th>COT IZVJEŠTAJI</th><th>JEDINSTVENI DANI CIJENA</th><th>CIJENE PO UGOVORIMA</th><th>POJEDINAČNA DOSPIJEĆA</th><th>POKRIVENOST</th></tr></thead><tbody id="yearRows"></tbody></table></div></section>
 <section class="panel"><h2>5 strategija × 5 razdoblja držanja</h2><div class="tabs" id="tabs"></div>
 <div class="tablewrap"><table><thead><tr><th>STRATEGIJA</th><th>GENERIRANI SIGNALI</th><th>IZVEDIVE SIMULACIJE</th><th>HOLDOUT N</th><th>KVALITETA UZORKA</th><th>HOLDOUT AVG USD</th><th>HOLDOUT WIN %</th><th>UKUPNI NETO USD</th><th>ODBIJENO ZBOG PODATAKA</th></tr></thead><tbody id="rows"></tbody></table></div>
 <p class="small">Izvediva simulacija znači da aplikacija ima dovoljne cijene i pravilo rolla za taj period; **ne** znači da je stvarni nalog bio izvršiv. Kvaliteta ovisi i o duljini uzorka, broju različitih mjeseci, minimalno osam trgovanja u oba dijela i izbacivanju trgovanja koja prelaze granicu uzoraka. Čak i kada su kriteriji ispunjeni, rezultat ostaje samo istraživački.</p></section>
 <div class="detail"><section class="panel"><h2 id="detailTitle">Detaljni pregled</h2><div id="details" class="kpis" style="grid-template-columns:repeat(2,minmax(120px,1fr))"></div><div class="tablewrap" id="recent"></div></section>
 <section class="panel"><h2>Izvori i metodologija</h2><div id="provenance" class="small"></div><h2 style="margin-top:20px">Nedostajući podaci</h2><div id="diagnostics" class="small"></div></section></div></div>
 <footer class="foot">Podaci iz privatnog API-ja za cijene pojedinačnih dospijeća i službene povijesne CFTC baze. Nije investicijska preporuka. Ne postoji automatska tržišna kupnja ili prodaja.</footer>
-</main><script src="/contract-roll-engine.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-quality-gates.js"></script><script src="/cot-roll-study.js"></script><script>
+</main><script src="/contract-roll-engine.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-quality-gates.js"></script><script src="/private-expiry-import.js"></script><script src="/cot-roll-study.js"></script><script>
 const $=x=>document.getElementById(x),esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const marketData=[
  ["GC","088691","Zlato"],["SI","084691","Srebro"],["HG","085692","Bakar"],["PL","076651","Platina"],
@@ -51,17 +52,35 @@ $("run").onclick=async()=>{
  try{
  const root=$("market").value,code=map[root].code,report=$("report").value,cat=$("category").value,counterpart=opponent[report][cat];
  const q=c=>"/api/core-history?"+new URLSearchParams({report,category:c,code,years:"10"});
- const choice=$("priceProvider").value,provider=root==="ES"&&choice==="community"?"community":root==="NQ"&&choice==="nqeval"?"nqeval":"yahoo";
+ const choice=$("priceProvider").value,provider=choice==="local"?"local":root==="ES"&&choice==="community"?"community":root==="NQ"&&choice==="nqeval"?"nqeval":"yahoo";
  const endpoint=(provider==="community"?"/api/community-expiries?":provider==="nqeval"?"/api/nq-evaluation?":"/api/free-contracts?")+new URLSearchParams({root,years:$("priceYears").value,minVolume:$("minVolume").value});
- const [market,primary,other]=await Promise.all([json(endpoint),json(q(cat)),json(q(counterpart))]);
- if(root!==$("market").value||report!==$("report").value||cat!==$("category").value)throw Error("Odabir se promijenio tijekom dohvata; pokreni ponovno");
- const data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));data.proxyPriceBasis=market.priceBasis;data.source=provider==="community"?"Community IBKR-labelled ES minute close proxy":provider==="nqeval"?"Hugging Face NQ per-expiry daily close evaluation sample, unaudited":"Yahoo per-expiry daily close proxy";
- const fingerprint=async input=>{const buffer=new TextEncoder().encode(JSON.stringify(input));const sha=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(sha)].map(n=>n.toString(16).padStart(2,"0")).join("")};
- const inputHashes={prices:await fingerprint(market.rows),primaryCot:await fingerprint(primary.rows),counterpartCot:await fingerprint(other.rows)};
+ const file=provider==="local"?$("localCsvFile").files?.[0]:null;
+ if(provider==="local"&&!file)throw Error("Odaberi lokalni CSV s pojedinačnim ugovorima");
+ if(file&&file.size>30*1024*1024)throw Error("CSV je prevelik; najviše 30 MB");
+ // Local CSV bytes never leave the browser. CFTC positioning still comes from official API.
+ const [primary,other,remoteOrCSV]=await Promise.all([json(q(cat)),json(q(counterpart)),provider==="local"?file.text():json(endpoint)]);
+ if(root!==$("market").value||report!==$("report").value||cat!==$("category").value||choice!==$("priceProvider").value)
+  throw Error("Odabir se promijenio tijekom dohvata; pokreni ponovno");
+ let market,data,priceFingerprint;
+ const fingerprint=async input=>{const buffer=new TextEncoder().encode(typeof input==="string"?input:JSON.stringify(input));const sha=await crypto.subtle.digest("SHA-256",buffer);return [...new Uint8Array(sha)].map(n=>n.toString(16).padStart(2,"0")).join("")};
+ if(provider==="local"){
+  data=window.COT_LOCAL_PRICES.validate(remoteOrCSV,window.COT_ROLL_ENGINE,{selectedRoot:root,minimumVolume:Number($("minVolume").value)});
+  market={priceBasis:data.proxyPriceBasis,publisher:"LOCAL_BROWSER_ONLY",minVolume:Number($("minVolume").value),years:"file",rows:[]};
+  data.source="Private locally imported "+file.name+"; provenance and execution unverified";
+  priceFingerprint=await fingerprint(remoteOrCSV);
+ }else{
+  market=remoteOrCSV;
+  data=window.COT_ROLL_ENGINE.parseCSV(toCSV(market));
+  data.proxyPriceBasis=market.priceBasis;
+  data.source=provider==="community"?"Community IBKR-labelled ES minute close proxy":provider==="nqeval"?"Hugging Face NQ per-expiry daily close evaluation sample, unaudited":"Yahoo per-expiry daily close proxy";
+  priceFingerprint=await fingerprint(market.rows);
+ }
+ const inputHashes={prices:priceFingerprint,primaryCot:await fingerprint(primary.rows),counterpartCot:await fingerprint(other.rows)};
+ const yearAudit=window.COT_LOCAL_PRICES.annual(primary.rows,data);
  result=window.COT_ROLL_STUDY.study(primary.rows,other.rows,data,window.COT_ROLL_ENGINE,{
   lookback:Number($("window").value),rollDays:Number($("rollDays").value),method:$("method").value,
   commissionPerSide:Number($("commission").value),slippageTicks:Number($("slippage").value),contracts:1});
- source={root,code,report,category:cat,counterpart,primaryRows:primary.rows.length,priceRows:market.rows.length,inputHashes,marketSource:market.priceBasis,marketPublisher:market.publisher||"Yahoo",marketMinVolume:market.minVolume,marketYears:market.years,archiveSha:primary.snapshotSHA256};horizon=4;selected="extreme_reversal";render();
+ source={root,code,report,category:cat,counterpart,primaryRows:primary.rows.length,priceRows:data.bars.length,inputHashes,marketSource:market.priceBasis,marketPublisher:market.publisher||"Yahoo",marketMinVolume:market.minVolume,marketYears:market.years,archiveSha:primary.snapshotSHA256,yearAudit,localAudit:data.localAudit||null,localFileName:provider==="local"?file.name:null};horizon=4;selected="extreme_reversal";render();
  $("download").disabled=false;$("status").textContent="Izračunano svih 25 kombinacija na dostupnom dijelu povijesti. Zapisano u memoriji preglednika.";
  }catch(e){$("status").textContent="Nije moguće dovršiti analizu: "+e.message;$("result").style.display="none"}
  finally{b.disabled=false}
@@ -70,6 +89,7 @@ function render(){
  if(!result)return;$("result").style.display="block";
  const r=result,available=r.rows.filter(x=>x.horizonWeeks===horizon),valid=r.rows.filter(x=>x.quality.comparisonEligible);
  const combined=r.rows.filter(x=>x.horizonWeeks===4).reduce((s,x)=>s+x.diagnostics.eligible,0);
+ $("yearRows").innerHTML=source.yearAudit.map(x=>'<tr><td>'+x.year+'</td><td>'+fmt(x.cotReports,0)+'</td><td>'+fmt(x.uniquePriceDates,0)+'</td><td>'+fmt(x.contractDayQuotes,0)+'</td><td>'+fmt(x.individualContracts,0)+'</td><td class="'+(x.uniquePriceDates<40?"warn":"dim")+'">'+esc(x.quoteAvailability)+'</td></tr>').join("");
  $("kpis").innerHTML=metricsCard("COT opažanja",fmt(source.primaryRows,0),r.firstCot+" → "+r.lastCot)+
  metricsCard("Ugovor–dan cijene",fmt(r.quoteRows,0),r.firstPrice+" → "+r.lastPrice+" · "+source.marketPublisher+" · min. volumen "+source.marketMinVolume)+
  metricsCard("Izvedive trgovine, 4W",fmt(combined,0),"zbroj strategija, mogu se preklapati")+
