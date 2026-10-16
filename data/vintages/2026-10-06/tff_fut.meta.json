@@ -1,0 +1,10 @@
+{
+  "report": "tff_fut",
+  "report_date": "2026-10-06",
+  "first_observed_at_utc": "2026-10-16T09:30:50.915336+00:00",
+  "source": "CFTC Public Reporting Environment, fetched via GitHub Actions",
+  "original_publication_verified": false,
+  "point_in_time_limitation": "Snapshot is first observed by the pipeline, not proven to be the publication-original version.",
+  "position_rows": 470,
+  "archive_bytes": 6636
+}
