@@ -114,3 +114,31 @@ The **Contract Roll Lab** now provides **Load Free Futures Prices** for GC (COME
 - Additional research resource: [Farag, Snudden & Upton public commodity term-structure archive](https://github.com/SSEconomics/commodity-spot-and-futures-data) has 17 commodities' contract-level futures data aligned by delivery horizon, monthly through December 2022. This has a different cadence and cannot replace daily expiry-specific settlements in the roll engine; reference only, no raw archive rehosting.
 
 See also [Yahoo Finance provider limitations](https://help.yahoo.com/kb/SLN2352.html).
+
+## v0.8 Private futures data access and extended markets
+
+**Deployment privacy:** Vercel project `cot-atlas-git` has team-authenticated `ssoProtection.deploymentType=all`; users must authenticate to access the app or futures-price routes. The GitHub source/CFTC repository is separate and remains public, but raw Yahoo close quotes are neither committed nor persisted there.
+
+The optional `/api/free-contracts?root=...` fetches **private, on-demand** daily close-price proxies by explicit expiry from 13 market roots:
+
+| Market | Code | Multiplier per *displayed quote unit* | Tick size |
+|---|---|---:|---:|
+| Gold | GC | 100 | 0.1 |
+| Silver | SI | 5000 | 0.005 |
+| Copper | HG | 25000 | 0.0005 |
+| Platinum | PL | 50 | 0.1 |
+| WTI | CL | 1000 | 0.01 |
+| Natural Gas | NG | 10000 | 0.001 |
+| E-mini S&P 500 | ES | 50 | 0.25 |
+| E-mini Nasdaq-100 | NQ | 20 | 0.25 |
+| 10-Year Treasury Note | ZN | 1000 | 1/64 |
+| US Treasury Bond | ZB | 1000 | 1/32 |
+| Corn | ZC | **50** | 0.25 cents/bushel |
+| Soybeans | ZS | **50** | 0.25 cents/bushel |
+| Chicago Wheat | ZW | **50** | 0.25 cents/bushel |
+
+**Why grain multipliers are 50 rather than 5000:** Yahoo quotes prices in **US cents per bushel**, while the underlying contract is 5,000 bushels. One quoted cent of change equals $50 on one standard futures contract. The code explicitly uses `0.25 cent × $50/cent = $12.50` per price tick. On CME's product page this same 0.25 cent is shown as $0.0025/bushel and a $12.50 tick. Conflating quote units would exaggerate simulated dollar P&L 100-fold.
+
+Dates for each listed contract were checked against connected IBKR contract metadata on 2026-10-16. Yahoo availability varies, often has missing/zero-volume bars, and the contract chain is **not complete**. All quotes are fetched on demand, filtered to positive-volume days on or before the corresponding last-trading date, and displayed with accurate source attribution. A front-month roll cannot be simulated through absent next contracts.
+
+**This is not licensed exchange settlement, tradable execution or vintage-audited PIT research.** Private Vercel authentication helps prevent public access but does *not* override any provider's terms for collection, storage, automated access, or redistribution; make any continued usage comply with the source's permitted scope. The full CFTC historical archive remains separate, freely queryable by report, and is not affected by these price settings.
