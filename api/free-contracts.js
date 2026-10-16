@@ -7,7 +7,8 @@ const CONTRACTS={
   {symbol:"GCG27.CMX",contract:"GCG27",expiry:"2027-02-24"}]},
  ES:{label:"CME E-mini S&P 500",exchange:"CME",multiplier:50,tickSize:0.25,contracts:[
   {symbol:"ESZ26.CME",contract:"ESZ26",expiry:"2026-12-18"},
-  {symbol:"ESH27.CME",contract:"ESH27",expiry:"2027-03-19"}]},
+  {symbol:"ESH27.CME",contract:"ESH27",expiry:"2027-03-19"},
+  {symbol:"ESM27.CME",contract:"ESM27",expiry:"2027-06-17"}]},
  CL:{label:"NYMEX WTI Crude",exchange:"NYMEX",multiplier:1000,tickSize:0.01,contracts:[
   {symbol:"CLZ26.NYM",contract:"CLZ26",expiry:"2026-11-20"},
   {symbol:"CLF27.NYM",contract:"CLF27",expiry:"2026-12-21"}]},
