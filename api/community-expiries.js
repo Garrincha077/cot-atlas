@@ -58,7 +58,8 @@ async function retrieve(source,opts){
   if(bytes.length>MAX_BYTES)throw Error("source file too large");
   const parsed=parseMinuteCSV(bytes.toString("utf8"),source,opts);
   parsed.metadata.sourceFileSha256=createHash("sha256").update(bytes).digest("hex");
-  parsed.metadata.sourceFile=source.file;parsed.metadata.available=true;
+  parsed.metadata.sourceFile=source.file;
+  if(!parsed.data.length)parsed.metadata.reason="No complete daily sessions matching explicit contract label, volume and closing-minute criteria";
   return parsed;
  }catch(e){return {data:[],metadata:{contract:source.contract,expiry:source.expiry,
    sourceFile:source.file,available:false,reason:String(e.message||e).slice(0,170)}}}
