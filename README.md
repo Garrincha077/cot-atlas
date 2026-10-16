@@ -83,4 +83,4 @@ The lab runs **five prespecified signal hypotheses × 1, 2, 4, 8, 12 week holdin
 
 **Long history:** CFTC historical API returns its *current* version of historical position records, which may include later corrections. Historical original as-published vintages and independent roll-adjusted futures prices are required before calling this research strict point-in-time or trade-executable.
 
-The core signal engine is dependency-free in `lib/research-engine.mjs`; its deterministic offline tests are at `tests/test_research_lab.mjs`, and `.github/workflows/research-ci.yml` runs those tests on PRs and relevant pushes.
+The core signal engine is dependency-free in `lib/research-engine.js`; its deterministic offline tests are at `tests/test_research_lab.mjs`, and `.github/workflows/research-ci.yml` runs those tests on PRs and relevant pushes.
