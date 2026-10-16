@@ -22,18 +22,21 @@ function parseCSV(content,{maxRows=400000}={}){
  if(lines.length<3)throw Error("CSV must contain at least two settlement bars and a header");
  if(lines.length-1>maxRows)throw Error("CSV exceeds per-file safety limit");
  const headers=csvFields(lines.shift()).map(h=>h.toLowerCase().replace(/\s+/g,"_"));
- const needed=["date","contract","expiry","settle","multiplier","tick_size"];
+ const needed=["date","root","contract","expiry","settle","multiplier","tick_size"];
  for(const k of needed)if(!headers.includes(k))throw Error("Missing column: "+k);
  if(new Set(headers).size!==headers.length)throw Error("Repeated CSV header");
  const idx=name=>headers.indexOf(name);
- let bars=[],known=new Set(),contractExpiry=new Map(),multiplier=null,tickSize=null;
+ let bars=[],known=new Set(),contractExpiry=new Map(),multiplier=null,tickSize=null,marketRoot=null;
  for(let i=0;i<lines.length;i++){
   let row=csvFields(lines[i]);
   if(row.length!==headers.length)throw Error("CSV row "+(i+2)+": expected "+headers.length+" columns");
-  const date=row[idx("date")],contract=row[idx("contract")],expiry=row[idx("expiry")];
+  const date=row[idx("date")],rootCode=row[idx("root")],contract=row[idx("contract")],expiry=row[idx("expiry")];
   const settle=Number(row[idx("settle")]),m=Number(row[idx("multiplier")]),tick=Number(row[idx("tick_size")]);
   if(!dateOK(date)||!dateOK(expiry)||days(date,expiry)<0)throw Error("Invalid trade date or expiry on row "+(i+2));
-  if(!/^[A-Za-z0-9_.-]{1,32}$/.test(contract))throw Error("Invalid contract identifier on row "+(i+2));
+  if(!/^[A-Za-z0-9_.-]{1,32}$/.test(contract)||!/^[A-Za-z0-9_.-]{1,16}$/.test(rootCode))throw Error("Invalid contract or market root identifier on row "+(i+2));
+  if(marketRoot!==null&&rootCode!==marketRoot)throw Error("Mixed underlying roots — import one futures market per file");
+  marketRoot=rootCode;
+  if(row[idx("settle")]==="")throw Error("Missing settlement on row "+(i+2));
   if(!Number.isFinite(settle)||!Number.isFinite(m)||m<=0||!Number.isFinite(tick)||tick<=0)throw Error("Bad settlement, multiplier or tick size on row "+(i+2));
   if(multiplier!==null&&(m!==multiplier||tick!==tickSize))throw Error("Mixed contract specifications; upload one underlying/multiplier/tick size per file");
   multiplier=m;tickSize=tick;
@@ -49,7 +52,7 @@ function parseCSV(content,{maxRows=400000}={}){
  bars.sort((a,b)=>a.date.localeCompare(b.date)||a.expiry.localeCompare(b.expiry)||a.contract.localeCompare(b.contract));
  const dates=[...new Set(bars.map(x=>x.date))];
  if(dates.length<3)throw Error("At least three distinct settlement dates required");
- return {bars,dates,multiplier,tickSize,contracts:contractExpiry.size,firstDate:dates[0],lastDate:dates.at(-1),source:"User-imported CSV. Provenance NOT verified."}
+ return {bars,dates,multiplier,tickSize,marketRoot,contracts:contractExpiry.size,firstDate:dates[0],lastDate:dates.at(-1),source:"User-imported CSV. Provenance NOT verified."}
 }
 function prepare(data){
  const byDate=new Map(),byKey=new Map();
@@ -126,7 +129,7 @@ function simulate(data,opts={}){
  const net=gross-fees,peak=Math.max(0,...equity.map(x=>x.cumulativeNetUSD));let runningPeak=0,drawdown=0;
  for(const r of equity){runningPeak=Math.max(runningPeak,r.cumulativeNetUSD);drawdown=Math.min(drawdown,r.cumulativeNetUSD-runningPeak)}
  const metadata={source:data.source,priceRows:data.bars.length,contractsInFile:data.contracts,
-  firstDate:data.firstDate,lastDate:data.lastDate,multiplier:data.multiplier,tickSize:data.tickSize};
+  firstDate:data.firstDate,lastDate:data.lastDate,marketRoot:data.marketRoot,multiplier:data.multiplier,tickSize:data.tickSize};
  return {status:"CONTRACT_SETTLEMENT_RESEARCH_ONLY",verifiedVendorSource:false,
   methodology:"P&L = position direction × (today settlement − previous settlement OF THE SAME HELD CONTRACT) × contract multiplier × contracts; roll close/open at same-day settlements; no cross-contract price gap booked as P&L.",
   metadata,parameters:{start,end,side,rollDays,method,commissionPerSide,slippageTicks,contracts},
