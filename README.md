@@ -225,7 +225,7 @@ NEW: user-selectable exact-expiry community ES minute observations alongside the
 
 Tests: node --test tests/test_community_expiries.mjs, plus existing coverage, roll, COT and UI CI.
 
-## v1.4 — NQ four-expiry official-label EVALUATION sample (on-demand only)
+## v1.4 — NQ four-expiry explicitly-labelled EVALUATION sample (on-demand only)
 
 Private research now offers a second price source for NQ, alongside existing Yahoo per-expiry daily close. The same new NQ provider can be selected in COT × Contract Research, Contract Roll Lab and Coverage Audit.
 
