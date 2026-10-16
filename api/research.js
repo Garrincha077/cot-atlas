@@ -1,7 +1,7 @@
 // COT Atlas Research Lab — per-contract historical comparison (NOT production-grade PIT).
 import historical from "./historical.js";
 import prices from "./prices.js";
-import {research,STRATEGIES,HORIZONS} from "../lib/research-engine.mjs";
+import {research,STRATEGIES,HORIZONS} from "../lib/research-engine.js";
 const counterparts={
  disagg:{managed_money:"producer_merchant",producer_merchant:"managed_money",swap_dealer:"managed_money",other_reportable:"producer_merchant",nonreportable:"producer_merchant"},
  tff:{leveraged_funds:"asset_managers",asset_managers:"leveraged_funds",dealers:"leveraged_funds",other_reportable:"asset_managers",nonreportable:"asset_managers"},
