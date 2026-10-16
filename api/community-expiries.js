@@ -22,7 +22,7 @@ function parseMinuteCSV(text,source,{minVolume=10,earliest="2024-01-01"}={}){
  for(let i=1;i<lines.length;i++){
   const cols=lines[i].split(",");
   if(cols.length!==7){invalid++;continue}
-  const [tag,timestamp,,, ,closeStr,volumeStr]=cols;
+  const tag=cols[0],timestamp=cols[1],closeStr=cols[5],volumeStr=cols[6];
   if(tag!==source.tag){wrongContract++;continue}
   const match=/^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):\d{2}[+-]\d{4}$/.exec(timestamp);
   const close=Number(closeStr),vol=Number(volumeStr);
