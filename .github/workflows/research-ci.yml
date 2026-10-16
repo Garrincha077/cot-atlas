@@ -18,6 +18,10 @@ on:
       - 'tests/test_roll_study.mjs'
       - 'api/free-contracts.js'
       - 'api/community-expiries.js'
+      - 'api/nq-evaluation.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/test_nq_evaluation.mjs'
       - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
@@ -47,6 +51,10 @@ on:
       - 'tests/test_roll_study.mjs'
       - 'api/free-contracts.js'
       - 'api/community-expiries.js'
+      - 'api/nq-evaluation.js'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/test_nq_evaluation.mjs'
       - 'tests/test_community_expiries.mjs'
       - 'tests/test_free_contracts.mjs'
       - 'contract-roll-engine.js'
@@ -75,5 +83,7 @@ jobs:
         run: |
           node --version
           node -e "if (parseInt(process.versions.node, 10) < 20) process.exit(1)"
+      - name: Install pinned Parquet parser
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Run offline market and research tests
-        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs tests/test_community_expiries.mjs
+        run: node --test tests/test_market_focus.mjs tests/test_research_lab.mjs tests/test_contract_roll.mjs tests/test_core_archive.mjs tests/test_free_contracts.mjs tests/test_roll_study.mjs tests/test_coverage_audit.mjs tests/test_community_expiries.mjs tests/test_nq_evaluation.mjs
