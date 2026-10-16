@@ -96,7 +96,7 @@ function render(){
  '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
  '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
  '<p><strong>Datum signala:</strong> COT utorak; ulaz tek nakon pretpostavljenog petka. Publikacija nije provjerena po svakom izvještaju.</p>'+
- ''<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
+ '<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
  '<p><strong>SHA-256 primarnih COT redaka:</strong> '+esc(source.inputHashes.primaryCot)+'</p>'+
  '<p><strong>SHA-256 referentnog COT niza:</strong> '+esc(source.inputHashes.counterpartCot)+'</p>'+
  '<p><strong>Troškovi:</strong> '+r.options.commissionPerSide+' USD po strani + '+r.options.slippageTicks+' ticka po strani po jednom ugovoru, uz '+r.options.method+' pravilo.</p>'+
