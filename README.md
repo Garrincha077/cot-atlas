@@ -224,3 +224,15 @@ NEW: user-selectable exact-expiry community ES minute observations alongside the
 - This is a research close proxy; data origin, execution, settlement and original historical COT vintages are not independently audited. Private Vercel SSO does not override provider usage terms. NQ is NOT upgraded with inferred contract identifiers.
 
 Tests: node --test tests/test_community_expiries.mjs, plus existing coverage, roll, COT and UI CI.
+
+## v1.4 — NQ four-expiry official-label EVALUATION sample (on-demand only)
+
+Private research now offers a second price source for NQ, alongside existing Yahoo per-expiry daily close. The same new NQ provider can be selected in COT × Contract Research, Contract Roll Lab and Coverage Audit.
+
+- Source: https://huggingface.co/datasets/lynx1231/historical-equity-index-futures-data-sample , daily Parquet evaluation sample. Original file at data/daily/part-00000.parquet is SHA-256 pinned to 9d663cf2425e5f11c19a4d5292c75e6bfec96880e28d7446897f165d6f1bffb6, verified 2026-10-16. It is a FREE RESEARCH/EVALUATION SAMPLE, not a proven authenticated CME historical settlement feed. Source data are fetched on demand, memory only; raw quotes are never added to GitHub.
+- Explicit contract codes are NQH26, NQM26, NQU26 and NQZ26, independently checked last trading dates via IBKR: Mar 20, Jun 18, Sep 18 and Dec 18 of 2026, respectively. All other contract codes in the Parquet are excluded, never inferred.
+- Parser uses pinned hyparquet 1.31.4 with ZSTD codec decoder pinned in package-lock.json. Validates SHA-256 before parsing, expected schema, contract code, volume, expiry, OHLC range and minimum NQ 0.25-point futures tick. Rows outside the grid (including final cash settlement prices not tradable as tick-conforming futures quotes) are discarded, not rounded.
+- Source audit at volume >= 10 contracts and all available dates: NQH26 153 prices; NQM26 160; NQU26 102; NQZ26 44; 459 CONTRACT-DAY observations in total from 2025-06-18 to 2026-07-10. 2 off-grid expiry-day prices were excluded. Early years with volume=0 are excluded. The data sample does not span 10 trading years even if user requests a 10-year history.
+- Exactly held-contract roll audit with this source: 48/48 sampled 4-week windows had sufficient observed data. CFTC 10Y history joined via existing TFF leveraged funds vs asset managers yields 39 hypothetical signal × hold-period completions across all 25 configurations. ZERO configurations satisfy evidence-quality gates. Sample gaps, as-published COT vintages, executable fills and multiple testing remain risks.
+- Source restrictions apply even for private research. The user-facing UI states these are third-party DAILY CLOSE evaluation data, NOT CME settlements. API: /api/nq-evaluation?root=NQ&years=10&minVolume=10 ; other roots are rejected, source/validation failures return HTTP 503 with no fabricated fallback.
+- Checks: node --test tests/test_nq_evaluation.mjs plus existing suite. GitHub research CI first installs package-lock pinned dependencies using npm ci --ignore-scripts.
