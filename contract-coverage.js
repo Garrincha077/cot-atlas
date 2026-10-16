@@ -64,7 +64,7 @@ function prices(raw,{rollEngine=null,rollDays=5,horizonWeeks=4,stepDays=7,maxTri
     trial.completed++;if(trial.sampleTradeDates.length<8)trial.sampleTradeDates.push({entry,exit,rolls:report.result.rolls})
    }catch(e){
     const reason=String(e.message||e);
-    if(/Missing settlement|Roll required|No eligible contract|far from an available/.test(reason))trial.failedCoverage++;
+    if(/Missing settlement|Roll required|No eligible contract|far from an available|Market session gap/.test(reason))trial.failedCoverage++;
     else trial.failedOther++;
     if(trial.errorSamples.length<6&&!trial.errorSamples.includes(reason))trial.errorSamples.push(reason);
    }
