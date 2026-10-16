@@ -61,6 +61,6 @@ test("local-only UI cannot silently load simulated data",()=>{
  const html=fs.readFileSync(new URL("../roll-lab.html",import.meta.url),"utf8");
  const js=html.match(/<script>([\s\S]*?)<\/script>/);
  assert.ok(js);assert.doesNotThrow(()=>new Function(js[1]));
- assert.match(html,/id="csv"/);assert.match(html,/Uvoz radi lokalno/);
+ assert.match(html,/id="csv"/);assert.match(html,/Korisnički CSV obrađuje se lokalno/);
  assert.ok(!html.includes("window.addEventListener('load',()=>loadSample()"));
 });
