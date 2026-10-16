@@ -1,0 +1,157 @@
+{
+  "source": "CFTC Public Reporting Environment (current, potentially revised historical series)",
+  "vintage_verified": false,
+  "price_data_available": false,
+  "generated_at_utc": "2026-10-16T11:40:21.374203+00:00",
+  "requested_since": "1986-01-01",
+  "core_contracts_requested": 34,
+  "core_contract_codes": [
+    "13874A",
+    "209742",
+    "239742",
+    "134741",
+    "042601",
+    "044601",
+    "043602",
+    "020601",
+    "020604",
+    "088691",
+    "084691",
+    "085692",
+    "076651",
+    "067651",
+    "023651",
+    "06765T",
+    "099741",
+    "097741",
+    "096742",
+    "090741",
+    "232741",
+    "098662",
+    "002602",
+    "005602",
+    "001602",
+    "001612",
+    "026603",
+    "007601",
+    "080732",
+    "083731",
+    "073732",
+    "033661",
+    "133741",
+    "146021"
+  ],
+  "sqlite_sha256_gzip": "555882a4477ebaf8b031268952092e317d7ca406b073e36f9569db8aea518e6e",
+  "compressed_bytes": 21373531,
+  "total_position_rows": 669654,
+  "total_observation_rows": 179056,
+  "coverage": [
+    {
+      "report": "disagg_comb",
+      "first": "2006-06-13",
+      "last": "2026-10-06",
+      "contracts": 17,
+      "observations": 17784
+    },
+    {
+      "report": "disagg_fut",
+      "first": "2006-06-13",
+      "last": "2026-10-06",
+      "contracts": 17,
+      "observations": 17747
+    },
+    {
+      "report": "legacy_comb",
+      "first": "1995-03-21",
+      "last": "2026-10-06",
+      "contracts": 34,
+      "observations": 48447
+    },
+    {
+      "report": "legacy_fut",
+      "first": "1986-01-15",
+      "last": "2026-10-06",
+      "contracts": 34,
+      "observations": 53904
+    },
+    {
+      "report": "supplemental",
+      "first": "2006-01-03",
+      "last": "2026-10-06",
+      "contracts": 10,
+      "observations": 10462
+    },
+    {
+      "report": "tff_comb",
+      "first": "2006-06-13",
+      "last": "2026-10-06",
+      "contracts": 17,
+      "observations": 15356
+    },
+    {
+      "report": "tff_fut",
+      "first": "2006-06-13",
+      "last": "2026-10-06",
+      "contracts": 17,
+      "observations": 15356
+    }
+  ],
+  "queries": [
+    {
+      "report": "disagg_fut",
+      "dataset": "72hh-3qpy",
+      "rows": 17747,
+      "positions": 88735,
+      "first": "2006-06-13",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "disagg_comb",
+      "dataset": "kh3c-gbw2",
+      "rows": 17784,
+      "positions": 88920,
+      "first": "2006-06-13",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "tff_fut",
+      "dataset": "gpe5-46if",
+      "rows": 15356,
+      "positions": 76780,
+      "first": "2006-06-13",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "tff_comb",
+      "dataset": "yw9f-hn96",
+      "rows": 15356,
+      "positions": 76780,
+      "first": "2006-06-13",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "legacy_fut",
+      "dataset": "6dca-aqww",
+      "rows": 53904,
+      "positions": 161712,
+      "first": "1986-01-15",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "legacy_comb",
+      "dataset": "jun7-fc8e",
+      "rows": 48447,
+      "positions": 145341,
+      "first": "1995-03-21",
+      "last": "2026-10-06"
+    },
+    {
+      "report": "supplemental",
+      "dataset": "4zgm-a668",
+      "rows": 10462,
+      "positions": 31386,
+      "first": "2006-01-03",
+      "last": "2026-10-06"
+    }
+  ]
+}
