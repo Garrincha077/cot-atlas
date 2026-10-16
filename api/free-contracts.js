@@ -50,8 +50,8 @@ const CONTRACTS={
   {symbol:"PLF27.NYM",contract:"PLF27",expiry:"2027-01-27"},
   {symbol:"PLJ27.NYM",contract:"PLJ27",expiry:"2027-04-28"}]}
 };
-async function fetchChart(symbol){
- const endpoint="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(symbol)+"?range=2y&interval=1d";
+async function fetchChart(symbol,years,minVolume){
+ const endpoint="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(symbol)+"?range="+years+"y&interval=1d";
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
  try{
   const res=await fetch(endpoint,{signal:controller.signal,headers:{"Accept":"application/json","User-Agent":"Mozilla/5.0 (COT Atlas private free-data research)"}});
@@ -59,7 +59,7 @@ async function fetchChart(symbol){
   const json=await res.json(),item=json.chart?.result?.[0],close=item?.indicators?.quote?.[0]?.close,volume=item?.indicators?.quote?.[0]?.volume;
   if(!Array.isArray(close)||!Array.isArray(item?.timestamp))return {symbol,available:false,reason:"Provider returned no usable history"};
   const data=item.timestamp.map((x,i)=>({date:new Date(x*1000).toISOString().slice(0,10),close:Number(close[i]),volume:volume?.[i]==null?null:Number(volume[i])}))
-   .filter(x=>Number.isFinite(x.close)&&Number.isFinite(x.volume)&&x.volume>0);
+   .filter(x=>Number.isFinite(x.close)&&Number.isFinite(x.volume)&&x.volume>=minVolume);
   return {symbol,available:true,shortName:item.meta?.shortName||null,data};
  }catch(e){return {symbol,available:false,reason:String(e.message).slice(0,90)}}
  finally{clearTimeout(timer)}
@@ -67,10 +67,12 @@ async function fetchChart(symbol){
 export default async function handler(req,res){
  if(req.method!=="GET")return res.status(405).json({error:"GET only"});
  const root=String(req.query.root||"").toUpperCase(),conf=CONTRACTS[root];
+ const years=Number(req.query.years??10),minVolume=Number(req.query.minVolume??10);
+ if(![2,5,10].includes(years)||![1,10,100].includes(minVolume))return res.status(400).json({error:"years must be 2/5/10, minVolume must be 1/10/100"});
  if(root==="LIST")return res.status(200).json({source:"IBKR verified contract catalogs; Yahoo private close proxies on individual request",roots:Object.entries(CONTRACTS).map(([root,v])=>({root,label:v.label,contractCount:v.contracts.length}))});
  if(!conf)return res.status(400).json({error:"Unsupported market: choose one of "+Object.keys(CONTRACTS).join(", "),supported:Object.keys(CONTRACTS)});
  try{
-  const result=await Promise.all(conf.contracts.map(x=>fetchChart(x.symbol)));
+  const result=await Promise.all(conf.contracts.map(x=>fetchChart(x.symbol,years,minVolume)));
   const report=[],all=[];
   for(let i=0;i<result.length;i++){
    const c=conf.contracts[i],r=result[i];
@@ -85,15 +87,16 @@ export default async function handler(req,res){
   all.sort((a,b)=>a.date.localeCompare(b.date)||a.expiry.localeCompare(b.expiry));
   res.setHeader("Cache-Control","private,no-store,max-age=0");
   return res.status(200).json({
-   root,label:conf.label,exchange:conf.exchange,rows:all,contracts:report,
+   root,label:conf.label,exchange:conf.exchange,rows:all,contracts:report,years,minVolume,
    priceBasis:"YAHOO_DAILY_CLOSE_PROXY__NOT_EXCHANGE_SETTLEMENT",
+   ageLiquidityWarning:"Far-dated contracts can have sporadic/stale closes. Increasing the quote horizon does not prove the early dates were liquid or executable.",
    expirySource:"IBKR contract metadata, checked 2026-10-16; validate against latest exchange calendar before any trading",
    currentAsOf:new Date().toISOString(),
    redistributionRightsVerified:false,licensedExchangeSettlements:false,
    limitations:[
     "Open Yahoo chart quotes are not official daily exchange settlements and can be missing, stale or illiquid.",
     "All prices after independently verified last-trading dates have been excluded.",
-    "Only positive-volume close bars have been included; missing days have not been interpolated.",
+    "Only rows meeting user-specified minimum volume have been included; missing days have not been interpolated.",
     "Sparse contract chains: not every trading month is represented; the roll engine must stop if the next eligible contract is missing.",
     "Use for exploratory personal research; do not treat as tradeable historical execution or reproduce a provider's data feed."
    ]
