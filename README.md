@@ -158,3 +158,15 @@ The private browser combines **official CFTC historical positioning** for the se
 **Limits:** Current revised COT historical archive is not as-published PIT, the assumed release dates are not individually validated, Yahoo individual-expiry daily closes are not exchange settlements, futures margins, financing, taxes and fill availability are not modeled, and 25 comparisons invite selection bias. USD hypothetical P&L is **not** percent return on capital. Only 13 underlying roots currently have a sparse direct-expiry quote chain; most ten-year COT history has **no matching prices**. This tool is research only, not a certified profitable trading strategy.
 
 Source files: cot-roll-study.js, roll-research.html; tests/test_roll_study.mjs. CI checks those plus contract-roll-engine.js.
+
+## v1.0 — CFTC official release-date schedule + long-expiry volume-gated quotes
+
+- New `cot-release-calendar.js` uses the [official December 2025 CFTC accelerated catch-up schedule](https://www.cftc.gov/PressRoom/PressReleases/9147-25), including 2025-11-10 Monday report observation and 2025-09-30 -> 2025-11-19 release, rather than incorrectly assuming the missing reports became available three days after Tuesday. The 2026 [CFTC tentative publication calendar](https://www.cftc.gov/MarketReports/CommitmentsofTraders/ReleaseSchedule/index.htm) correctly treats non-Friday publications (e.g. June 22 holiday). Older normal Tuesday observations still use a clearly flagged Friday date proxy. Neither calendar proves an as-published COT *value vintage*.
+- Individual-expiry Yahoo close quotes can now be requested for **2, 5 or 10 years** and filtered by minimum reported daily volume **1, 10 or 100 contracts**. Private browser default is 10Y with volume ≥10, with options to prioritize fuller coverage or better liquidity. Far-expiry close quotes can be stale or poorly executable even when volume is positive. No raw futures quotes are committed to this public repository.
+- Benchmark replay remains contract-by-contract, with no cross-expiry price-gap profit, missing settlement forward-fill or same-day volume lookahead. The research screen shows which report-date timings relied on historical official catch-up, 2026 scheduled CFTC releases or an unverified older Friday proxy.
+- Practical real-source tests with five strategies and four-week forward holding (overlapping trades can occur across strategies) showed:
+  - GC: **12** eligible at 2Y/volume≥1 -> **19** at 10Y/volume≥10.
+  - ZC: **19** -> **29**.
+  - CL: **13** -> **59**.
+  - ES: **7** -> **5**; liquidity screening reduced coverage because the available direct-expiry price set is sparse.
+- **Do not present counts above as statistically independent trades, holdout evidence or established performance.** The last 30% of market-price observations is a small holdout for many futures instruments. Report selection is across 25 configurations, and Yahoo close is not an exchange-reproducible fill.

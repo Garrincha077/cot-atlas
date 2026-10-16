@@ -20,7 +20,7 @@ test("private per-expiry feed includes contract-specific symbols across 13 marke
 test("free contract feed excludes post-expiry prices and volume-zero quotes",()=>{
  const api=read("api/free-contracts.js");
  assert.match(api,/x\.date<=c\.expiry/);
- assert.match(api,/x\.volume>0/);
+ assert.match(api,/x\.volume>=minVolume/);
  assert.match(api,/if\(!conf\)return res\.status\(400\)/);
  assert.match(api,/licensedExchangeSettlements:false/);
 });
@@ -32,4 +32,14 @@ test("free contract UI retains manual local file import with unambiguous provena
  assert.ok(html.includes("NE službeni settlementi"));
  for(const root of ["SI","NQ","NG","HG","ZC","ZS","ZW","ZN","ZB","PL"])assert.ok(html.includes('value="'+root+'"'),root);
  assert.ok(html.includes("crypto.subtle.digest"));
+});
+
+test("per-expiry fetch supports 10-year individual-contract chart plus explicit volume gate",()=>{
+ const api=read("api/free-contracts.js");
+ assert.ok(api.includes("years??10"));
+ assert.ok(api.includes("minVolume??10"));
+ assert.ok(api.includes("[2,5,10].includes(years)"));
+ assert.ok(api.includes("[1,10,100].includes(minVolume)"));
+ assert.ok(api.includes("x.volume>=minVolume"));
+ assert.ok(api.includes('private,no-store'));
 });
