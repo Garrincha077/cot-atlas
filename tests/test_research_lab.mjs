@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {HORIZONS,STRATEGIES,buildSignals,research} from "../lib/research-engine.mjs";
+import {HORIZONS,STRATEGIES,buildSignals,research} from "../lib/research-engine.js";
 import fs from "node:fs";
 const shifted=(d,days)=>new Date(new Date(d+"T00:00:00Z").getTime()+days*86400000).toISOString().slice(0,10);
 const positions=[],counterpart=[],prices=[];
