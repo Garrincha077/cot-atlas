@@ -140,9 +140,16 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
      diagnostics.eligible++;lastExit=exit;
     }catch(e){diagnostics.missingContractBars++;continue}
    }
-   const train=trades.filter(t=>t.signalDate<splitDate);
-   const holdout=trades.filter(t=>t.signalDate>=splitDate);
-   out.push({strategy:strategy.id,label:strategy.label,horizonWeeks,diagnostics,
+   // Purged chronological split: positions entered before the boundary but exited after it
+   // cannot be included in either training or holdout profitability aggregates.
+   const train=trades.filter(t=>t.exit<splitDate);
+   const holdout=trades.filter(t=>t.entry>=splitDate);
+   const excludedBoundary=trades.filter(t=>t.entry<splitDate&&t.exit>=splitDate);
+   if(train.length+holdout.length+excludedBoundary.length!==trades.length)throw Error("Invalid chronological cohort assignment");
+   diagnostics.crossSplitPurged=excludedBoundary.length;
+   if(!root.COT_QUALITY?.assess)throw Error("Load COT evidence gate module first");
+   const quality=root.COT_QUALITY.assess({train,holdout,boundaryExcluded:excludedBoundary,splitDate,priceDates:dates});
+   out.push({strategy:strategy.id,label:strategy.label,horizonWeeks,diagnostics,quality,
      inSample:metrics(train),outOfSample:metrics(holdout),combined:metrics(trades),
      recent:trades.slice(-15)});
   }
@@ -155,7 +162,8 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    asPublishedCOTVintageVerified:false,exchangeSettlementVerified:false,executionPriceVerified:false,
    lookaheadLimits:"CFTC historical revisions and exact publication-time/vintage timestamps are not audited; do not treat as certified point-in-time.",
    moneyUnits:"Hypothetical USD P&L per specified number of futures contracts, NOT return on invested capital.",
-   multipleTestingWarning:"25 independent configuration results are exploratory; even holdout results have selection/multiple-testing risk.",
+   multipleTestingWarning:"25 predefined configurations carry multiplicity and selection risk; EXPORATORY_ONLY does not mean PIT confirmed.",
+   holdoutMethod:"PURGED_CHRONOLOGICAL_BY_ENTRY_EXIT: training exits strictly before split, holdout entries on/after split, boundary-spanning trades excluded from both subsets.",
    root:data.marketRoot,contractCount:data.contracts,quoteRows:data.bars.length,
    firstPrice:dates[0],lastPrice:dates.at(-1),firstCot,lastCot,excludedReleaseReports:excluded,releaseSources,splitDate,
    options,strategies:STRATEGIES,rows:out};
