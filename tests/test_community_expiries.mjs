@@ -83,7 +83,7 @@ test("research & roll UIs load community ES only on ES, with Yahoo fallback for 
 
 test("modified upstream ES payload fails SHA-256 verification without substituting another contract",async()=>{
  const orig=mocks.ESM6;
- mocks.ESM6=orig.replace("5000.0", "5000.25"); // Source changed: pinned fixture bytes must fail
+ mocks.ESM6=orig.replace("2026-04-06", "2026-04-05"); // Source changed: pinned fixture bytes must fail
  try{await guarded(async()=>{
   const x=fakeRes();await mockHandler(fakeReq(),x);
   assert.equal(x.code,200);
