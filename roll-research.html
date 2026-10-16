@@ -3,7 +3,7 @@
 </style></head><body><main>
 <nav><a href="/">◈ COT Atlas</a><a href="/research.html">Kontinuirani Research Lab</a><a href="/roll-lab.html">Contract Roll Lab</a><a href="/coverage.html">Futures Coverage Audit v1.1</a><a href="/history.html">CFTC arhiva</a></nav>
 <div class="eyebrow">COT ATLAS / PRIVATE EMPIRICAL RESEARCH / v0.9</div>
-<h1>COT signali × <em>stvarni futures ugovori</em></h1>
+<h1>COT signali × <em>pojedinačna futures dospijeća</em></h1>
 <p>Spoji povijesne CFTC pozicije s cijenama pojedinačnih dospijeća. Svaka hipotetska trgovina koristi isti ugovor do rolla; cijena sljedećeg ugovora ne računa se kao profit ili gubitak.</p>
 <div class="notice"><strong>Ograničenja istraživanja:</strong> Yahoo pruža dnevne zaključne cijene, NE službene settlemente; CFTC povijest može biti naknadno ispravljena. Za 2025. nadoknađene izvještaje koristimo službeni posebni kalendar, a za 2026. službeni okvirni kalendar CFTC-a. Za ostale standardne datume ostaje izričito označena pretpostavka petka. Nema potvrđenih izvršnih cijena, punog PIT-a ni pouzdanih strategijskih prinosa iz kratkih i nepotpunih povijesti dospijeća.</div>
 <section class="panel"><h2>Konfiguracija</h2>
@@ -21,12 +21,12 @@
 <div id="result">
 <div class="kpis" id="kpis"></div>
 <section class="panel"><h2>5 strategija × 5 razdoblja držanja</h2><div class="tabs" id="tabs"></div>
-<div class="tablewrap"><table><thead><tr><th>STRATEGIJA</th><th>GENERIRANI SIGNALI</th><th>IZVEDIVE SIMULACIJE</th><th>HOLDOUT N</th><th>HOLDOUT AVG USD</th><th>HOLDOUT WIN %</th><th>UKUPNI NETO USD</th><th>ODBIJENO ZBOG PODATAKA</th></tr></thead><tbody id="rows"></tbody></table></div>
-<p class="small">Izvediva simulacija znači da aplikacija ima dovoljne cijene i pravilo rolla za taj period; **ne** znači da je stvarni nalog bio izvršiv. Rezultati s manje od 8 holdout trgovanja imaju preslab uzorak za rangiranje.</p></section>
+<div class="tablewrap"><table><thead><tr><th>STRATEGIJA</th><th>GENERIRANI SIGNALI</th><th>IZVEDIVE SIMULACIJE</th><th>HOLDOUT N</th><th>KVALITETA UZORKA</th><th>HOLDOUT AVG USD</th><th>HOLDOUT WIN %</th><th>UKUPNI NETO USD</th><th>ODBIJENO ZBOG PODATAKA</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="small">Izvediva simulacija znači da aplikacija ima dovoljne cijene i pravilo rolla za taj period; **ne** znači da je stvarni nalog bio izvršiv. Kvaliteta ovisi i o duljini uzorka, broju različitih mjeseci, minimalno osam trgovanja u oba dijela i izbacivanju trgovanja koja prelaze granicu uzoraka. Čak i kada su kriteriji ispunjeni, rezultat ostaje samo istraživački.</p></section>
 <div class="detail"><section class="panel"><h2 id="detailTitle">Detaljni pregled</h2><div id="details" class="kpis" style="grid-template-columns:repeat(2,minmax(120px,1fr))"></div><div class="tablewrap" id="recent"></div></section>
 <section class="panel"><h2>Izvori i metodologija</h2><div id="provenance" class="small"></div><h2 style="margin-top:20px">Nedostajući podaci</h2><div id="diagnostics" class="small"></div></section></div></div>
 <footer class="foot">Podaci iz privatnog API-ja za cijene pojedinačnih dospijeća i službene povijesne CFTC baze. Nije investicijska preporuka. Ne postoji automatska tržišna kupnja ili prodaja.</footer>
-</main><script src="/contract-roll-engine.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-roll-study.js"></script><script>
+</main><script src="/contract-roll-engine.js"></script><script src="/cot-release-calendar.js"></script><script src="/cot-quality-gates.js"></script><script src="/cot-roll-study.js"></script><script>
 const $=x=>document.getElementById(x),esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const marketData=[
  ["GC","088691","Zlato"],["SI","084691","Srebro"],["HG","085692","Bakar"],["PL","076651","Platina"],
@@ -65,17 +65,17 @@ $("run").onclick=async()=>{
 };
 function render(){
  if(!result)return;$("result").style.display="block";
- const r=result,available=r.rows.filter(x=>x.horizonWeeks===horizon),valid=r.rows.filter(x=>x.outOfSample.trades>=8);
+ const r=result,available=r.rows.filter(x=>x.horizonWeeks===horizon),valid=r.rows.filter(x=>x.quality.comparisonEligible);
  const combined=r.rows.filter(x=>x.horizonWeeks===4).reduce((s,x)=>s+x.diagnostics.eligible,0);
  $("kpis").innerHTML=metricsCard("COT opažanja",fmt(source.primaryRows,0),r.firstCot+" → "+r.lastCot)+
  metricsCard("Ugovor–dan cijene",fmt(r.quoteRows,0),r.firstPrice+" → "+r.lastPrice+" · min. volumen "+source.marketMinVolume)+
  metricsCard("Izvedive trgovine, 4W",fmt(combined,0),"zbroj strategija, mogu se preklapati")+
- metricsCard("Konfiguracije s ≥8 holdout",fmt(valid.length,0),"od 25 ukupno");
+ metricsCard("Istraživački prihvatljive",fmt(valid.length,0),"od 25; nijedna nije PIT certificirana");
  $("tabs").innerHTML=[1,2,4,8,12].map(h=>'<button class="'+(h===horizon?"active":"")+'" data-h="'+h+'">'+h+' tjedna</button>').join("");
  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{horizon=Number(b.dataset.h);render()});
  $("rows").innerHTML=available.map(row=>{
  const d=row.diagnostics,m=row.outOfSample,unavailable=d.outsideCoverage+d.noEntry+d.noExit+d.missingContractBars;
- return '<tr data-row="'+row.strategy+'" style="'+(selected===row.strategy?"background:#1c3a38;":"")+'"><td>'+esc(row.label)+'</td><td>'+fmt(d.signals,0)+'</td><td>'+fmt(d.eligible,0)+'</td><td class="'+(m.trades<8?"warn":"")+'">'+fmt(m.trades,0)+(m.trades<8?' <small>(malo)</small>':"")+'</td><td class="'+tone(m.avgNetUSD)+'">'+(m.avgNetUSD==null?"—":"$"+fmt(m.avgNetUSD))+'</td><td>'+ (m.winRate==null?"—":fmt(m.winRate,1)+"%")+'</td><td class="'+tone(row.combined.totalNetUSD)+'">'+(row.combined.totalNetUSD==null?"—":"$"+fmt(row.combined.totalNetUSD))+'</td><td>'+fmt(unavailable,0)+'</td></tr>';
+ return '<tr data-row="'+row.strategy+'" style="'+(selected===row.strategy?"background:#1c3a38;":"")+'"><td>'+esc(row.label)+'</td><td>'+fmt(d.signals,0)+'</td><td>'+fmt(d.eligible,0)+'</td><td class="'+(m.trades<8?"warn":"")+'">'+fmt(m.trades,0)+(m.trades<8?' <small>(malo)</small>':"")+'</td><td class="'+(row.quality.comparisonEligible?"good":"warn")+'">'+(row.quality.comparisonEligible?"ISTRAŽIVAČKI":"NEDOVOLJNO")+'</td><td class="'+tone(m.avgNetUSD)+'">'+(m.avgNetUSD==null?"—":"$"+fmt(m.avgNetUSD))+'</td><td>'+ (m.winRate==null?"—":fmt(m.winRate,1)+"%")+'</td><td class="'+tone(row.combined.totalNetUSD)+'">'+(row.combined.totalNetUSD==null?"—":"$"+fmt(row.combined.totalNetUSD))+'</td><td>'+fmt(unavailable,0)+'</td></tr>';
  }).join("");
  $("rows").querySelectorAll("tr").forEach(x=>x.onclick=()=>{selected=x.dataset.row;render()});
  const row=available.find(x=>x.strategy===selected)||available[0];if(!row)return;
@@ -91,12 +91,16 @@ function render(){
   '<li>Nedostajuća ili udaljena ulazna cijena: '+d.noEntry+'</li>'+
   '<li>Nedostajuća cijena za završetak: '+d.noExit+'</li>'+
   '<li>Nedostajuća cijena držanog ugovora / nevaljan roll: '+d.missingContractBars+'</li>'+
-  '<li>Preklopljene pozicije: '+d.overlap+'</li></ul>'+
+  '<li>Preklopljene pozicije: '+d.overlap+'</li>'+
+  '<li>Izbačeno zbog prelaska train/holdout granice: '+d.crossSplitPurged+'</li></ul>'+
+  '<p><strong>Kvaliteta uzorka:</strong> '+row.quality.classification+'</p>'+
+  '<p>Train / holdout trgovanja: '+row.quality.trainTrades+' / '+row.quality.holdoutTrades+'; različiti holdout mjeseci: '+row.quality.holdoutDistinctMonths+'; kalendarski raspon holdout trgovanja: '+row.quality.holdoutSpanDays+' dana.</p>'+
+  '<p><strong>Zašto nije dovoljno:</strong> '+(row.quality.reasonCodes.join(", ")||"Uvjeti veličine uzorka zadovoljeni; podaci i dalje nisu PIT ili izvršivi.")+'</p>'+
   '<p>CFTC vremenski izvori: '+Object.entries(r.releaseSources||{}).map(([k,v])=>k+': '+v).join(' · ')+'</p>'+
   '<p>Izvještaji bez sigurnog datuma, isključeni: '+r.excludedReleaseReports+'</p>';
  $("provenance").innerHTML='<p><strong>CFTC:</strong> '+esc(r.positionSource)+' ('+esc(source.report)+' / '+esc(source.category)+' naspram '+esc(source.counterpart)+')</p>'+
  '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
- '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
+ '<p><strong>Uzorkovanje:</strong> holdout počinje '+r.splitDate+', što je 70% razdoblja <em>dostupnih cijena</em>. Trgovanja koja prelaze granicu dvaju uzoraka uklonjena su iz obje evaluacije. Ranije COT vrijednosti služe samo za izračun indikatora.</p>'+
  '<p><strong>Datum signala:</strong> COT izvještaj: ulaz tek NAKON planirane objave prema CFTC-u ili izričito označenoj pretpostavci petka za starije datume.</p>'+
  '<p><strong>SHA-256 cjenovnih redaka:</strong> '+esc(source.inputHashes.prices)+'</p>'+
  '<p><strong>SHA-256 primarnih COT redaka:</strong> '+esc(source.inputHashes.primaryCot)+'</p>'+
