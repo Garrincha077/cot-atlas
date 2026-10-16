@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/update_snapshot.py'
+      - 'scripts/capture_vintage.py'
+      - 'tests/test_archives.py'
       - '.github/workflows/cot-refresh.yml'
   schedule:
     - cron: '17 23 * * 5'
@@ -31,15 +33,20 @@ jobs:
         with:
           python-version: '3.12'
       - name: Syntax check
-        run: python -m py_compile scripts/update_snapshot.py
+        run: python -m py_compile scripts/update_snapshot.py scripts/capture_vintage.py
       - name: Fetch and validate seven CFTC datasets
         run: python -u scripts/update_snapshot.py
+      - name: Capture first-observed CFTC vintages
+        run: python -u scripts/capture_vintage.py
+      - name: Verify archive consistency and vintages
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Publish immutable revision
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -f data/cot.sqlite3.gz
           git add data/manifest.json
+          git add data/vintages/
           if git diff --staged --quiet; then
             echo 'No data changes'
           else
