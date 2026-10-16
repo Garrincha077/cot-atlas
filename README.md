@@ -11,9 +11,11 @@ COT Atlas is a public-data research dashboard powered by the **CFTC Public Repor
 
 - Seven CFTC datasets: Disaggregated (futures, combined), Traders in Financial Futures (futures, combined), Legacy (futures, combined), and Supplemental CIT.
 - Market Explorer with historical COT index, net/long/short positions, search, Heatmap, and Reversal Radar.
+- **Flagship / Other / All contracts**, with 34 curated key CFTC contract-market codes across equity indices, rates, FX, metals, energy, agriculture and crypto. Flagship is the default. Other markets remain searchable. Optional sector selector; **not a ranking by volume or global liquidity**.
+- **Five- and ten-year drilldowns for individual contracts** from the official CFTC API; these long histories are fetched on demand rather than inflating the shared SQLite archive. Historical values may have been revised.
 - Archived COT mode (default): the Vercel API downloads a versioned SQLite snapshot from GitHub, validates it, and serves records directly from SQLite with a bounded server cache. Switch to CFTC Live mode for newly released reports not yet archived.
-- Price API: nine explicitly mapped continuous futures symbols from Yahoo Finance, with visible provider/ticker attribution. All other CFTC contracts continue to require a user-provided price CSV. Futures rolls are not adjusted.
-- Daily price CSV import into the *browser session* for price comparison, or browser-session mapped Yahoo price history, for a limited release-calendar-aware event study.
+- Price API: 27 explicitly mapped continuous futures symbols from Yahoo Finance, with visible provider/ticker attribution and 2Y/5Y/10Y daily price ranges. Other CFTC contracts require a user-provided price CSV. Yahoo active-contract futures rolls are not back-adjusted or vintage-audited.
+- Daily price CSV import into the *browser session* for price comparison, or mapped Yahoo history, for a limited release-calendar-aware event study. Backtest permits user-set **total round-trip commission and slippage in basis points**, default 20 bps, and tracks trade count/drawdown.
 - Read-only CFTC API proxy at `/api/cot?report=disagg_fut&category=managed_money&weeks=104`.
 - Versioned SQLite archive from **GitHub Actions** at `data/cot.sqlite3.gz`. Status at `data/manifest.json`.
 - First-observed weekly CFTC vintages are preserved under `data/vintages/YYYY-MM-DD/<report>.json.gz` with accompanying metadata, never overwritten on later runs.
@@ -44,11 +46,18 @@ Workflow: [COT Atlas weekly CFTC archive](.github/workflows/cot-refresh.yml)
 
 - `index.html`: deployed HTML/CSS/JavaScript dashboard.
 - `api/cot.js`: primary SQLite archive reader with optional CFTC direct live proxy.
+- `api/historical.js`: selective 2Y/5Y/10Y CFTC per-contract data query; no massive all-market download.
+- `core-markets.js`: explicit flagship futures selection, codes, sector names and display order.
 - `api/prices.js`: explicitly mapped futures price provider.
 - `scripts/update_snapshot.py`: SQLite archiver.
 - `scripts/capture_vintage.py`: first-observed, immutable COT records for future point-in-time research.
 - `tests/test_archives.py`: offline archive and vintage consistency tests.
+- `tests/test_market_focus.mjs`: core contracts and UI syntax integrity tests.
 - `.github/workflows/cot-refresh.yml`: automation.
 - `vercel.json`: serverless config.
 
 CFTC: https://publicreporting.cftc.gov/ .
+
+## Methodology notice: historical research
+
+CFTC observation dates are typically Tuesdays, and release typically occurs Friday at 15:30 Eastern; the UI models exceptional 2025 delayed releases and curated 2026 publication dates. The **source archive remains approximately two years of all markets** while the **selected-contract explorer can load up to ten years**. The CFTC API exposes the current historical view, not independently verified original publication vintages. Yahoo continuous futures prices are not proven to use a consistent contract-roll rule, and return calculations from them are only rough research scenarios. **Do not treat 10-year price-based return results as audited trading performance**. To develop proper PIT results, capture original CFTC publications, futures contracts/roll calendar, and settled daily prices with expenses, and verify per-trade entry times.
