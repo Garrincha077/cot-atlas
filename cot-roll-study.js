@@ -45,9 +45,9 @@ function businessOnOrAfter(all,date){
 }
 function gapDays(a,b){return Math.round((Date.parse(b+"T00:00:00Z")-Date.parse(a+"T00:00:00Z"))/Ms)}
 function presumedRelease(date){
- if(date>="2025-09-30"&&date<="2026-01-20")return null;
- if(new Date(date+"T00:00:00Z").getUTCDay()!==2)return null;
- return addDays(date,3); // Friday proxy, NOT verified report-by-report
+ // Match official date-by-date CFTC schedules where available, reject unmapped exceptional dates.
+ // Standard Tuesdays outside the official calendar use an explicitly labelled Friday proxy.
+ return root.COT_RELEASE_DATES?.lookup(date)||null;
 }
 function applicablePriceTrend(data,release,indexValue,lead){
  if(indexValue===null)return null;
@@ -72,12 +72,14 @@ function generate(primaryRaw,oppositeRaw,data,{lookback=156,rollDays=5}={}){
  const differences=net.map((v,i)=>i<4?null:v-net[i-4]);
  const spreadZ=net.map((_,i)=>zscore(spreads,i)),deltaZ=net.map((_,i)=>zscore(differences,i));
  const signals=Object.fromEntries(STRATEGIES.map(s=>[s.id,[]]));
- let excluded=0,trendPreviously=0;
+ let excluded=0,trendPreviously=0;const releaseSources={};
  for(let i=1;i<cot.length;i++){
-  const row=cot[i],rel=presumedRelease(row.date),c=ci[i],last=ci[i-1];
-  if(!rel){excluded++;trendPreviously=0;continue}
+  const row=cot[i],release=presumedRelease(row.date),c=ci[i],last=ci[i-1];
+  if(!release){excluded++;trendPreviously=0;continue}
+  const rel=release.releaseDate;
+  releaseSources[release.source]=(releaseSources[release.source]||0)+1;
   if(c===null||last===null)continue;
-  const push=(k,side)=>signals[k].push({date:row.date,availableAfter:rel,side,positionIndex:round(c,1)});
+  const push=(k,side)=>signals[k].push({date:row.date,availableAfter:rel,side,positionIndex:round(c,1),releaseSource:release.source});
   if(last<=10&&c>=15)push("extreme_reversal",1);
   if(last>=90&&c<=85)push("extreme_reversal",-1);
   if(spreadZ[i]!==null&&spreadZ[i-1]!==null){
@@ -94,7 +96,7 @@ function generate(primaryRaw,oppositeRaw,data,{lookback=156,rollDays=5}={}){
   if(trend!==null&&trend!==0&&trend!==trendPreviously)push("cot_price_trend",trend);
   trendPreviously=trend??0;
  }
- return {cot,signals,excluded,firstCot:cot[0].date,lastCot:cot.at(-1).date};
+ return {cot,signals,excluded,releaseSources,firstCot:cot[0].date,lastCot:cot.at(-1).date};
 }
 function metrics(trades){
  if(!trades.length)return {trades:0,wins:null,winRate:null,avgNetUSD:null,medianNetUSD:null,totalNetUSD:null,avgLongBenchmarkUSD:null,maxDrawdownUSD:null,rolls:0};
@@ -110,7 +112,7 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
  if(!rollEngine?.simulate)throw Error("The contract roll simulator must be loaded");
  const options={lookback:156,rollDays:5,method:"fixed",commissionPerSide:2,slippageTicks:1,contracts:1,...opts};
  if(!["fixed","volume2"].includes(options.method)||!Number.isInteger(options.rollDays)||options.rollDays<1||options.rollDays>45)throw Error("Invalid roll settings");
- const {cot,signals,excluded,firstCot,lastCot}=generate(primaryRaw,oppositeRaw,data,options);
+ const {cot,signals,excluded,releaseSources,firstCot,lastCot}=generate(primaryRaw,oppositeRaw,data,options);
  const dates=data.dates;
  if(dates.length<3)throw Error("Insufficient contract-specific prices");
  const splitDate=dates[Math.floor(dates.length*.7)];
@@ -149,13 +151,13 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    positionSource:"CFTC official historical positioning (potentially revised)",
    priceSource:data.source||"User-supplied contract-level prices, unverified",
    priceBasis:data.proxyPriceBasis||"USER_IMPORT_UNVERIFIED",
-   publicationTiming:"Tuesday report assumed released Friday; first entry strictly after Friday date. 2025-09-30–2026-01-20 reports omitted.",
+   publicationTiming:"Official CFTC special 2025 and tentative 2026 dates used when mapped; other standard Tuesdays use Friday proxy. Entry strictly AFTER mapped publication date.",
    asPublishedCOTVintageVerified:false,exchangeSettlementVerified:false,executionPriceVerified:false,
-   lookaheadLimits:"CFTC historical revisions and exceptional release schedules remain unchecked; do not treat as certified point-in-time.",
+   lookaheadLimits:"CFTC historical revisions and exact publication-time/vintage timestamps are not audited; do not treat as certified point-in-time.",
    moneyUnits:"Hypothetical USD P&L per specified number of futures contracts, NOT return on invested capital.",
    multipleTestingWarning:"25 independent configuration results are exploratory; even holdout results have selection/multiple-testing risk.",
    root:data.marketRoot,contractCount:data.contracts,quoteRows:data.bars.length,
-   firstPrice:dates[0],lastPrice:dates.at(-1),firstCot,lastCot,excludedReleaseReports:excluded,splitDate,
+   firstPrice:dates[0],lastPrice:dates.at(-1),firstCot,lastCot,excludedReleaseReports:excluded,releaseSources,splitDate,
    options,strategies:STRATEGIES,rows:out};
 }
 root.COT_ROLL_STUDY={study,generate,HORIZONS,STRATEGIES};
