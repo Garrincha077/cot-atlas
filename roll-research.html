@@ -91,6 +91,7 @@ function render(){
   '<li>Nedostajuća cijena za završetak: '+d.noExit+'</li>'+
   '<li>Nedostajuća cijena držanog ugovora / nevaljan roll: '+d.missingContractBars+'</li>'+
   '<li>Preklopljene pozicije: '+d.overlap+'</li></ul>'+
+  '<p>CFTC vremenski izvori: '+Object.entries(r.releaseSources||{}).map(([k,v])=>k+': '+v).join(' · ')+'</p>'+
   '<p>Izvještaji bez sigurnog datuma, isključeni: '+r.excludedReleaseReports+'</p>';
  $("provenance").innerHTML='<p><strong>CFTC:</strong> '+esc(r.positionSource)+' ('+esc(source.report)+' / '+esc(source.category)+' naspram '+esc(source.counterpart)+')</p>'+
  '<p><strong>Futures:</strong> '+esc(r.priceSource)+'. Dnevna zaključna cijena, ne burzovni settlement.</p>'+
