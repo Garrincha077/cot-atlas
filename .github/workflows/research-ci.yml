@@ -16,6 +16,9 @@ on:
     branches: [main]
     paths:
       - 'research.html'
+      - 'roll-lab.html'
+      - 'contract-roll-engine.js'
+      - 'tests/test_contract_roll.mjs'
       - 'index.html'
       - 'lib/**'
       - 'api/research.js'
