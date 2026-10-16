@@ -7,6 +7,7 @@ COT Atlas is a public-data research dashboard powered by the **CFTC Public Repor
 - **GitHub-connected edition:** https://cot-atlas-git.vercel.app
 - **Research Lab v0.4:** https://cot-atlas-git.vercel.app/research.html
 - **Contract Roll Lab v0.5:** https://cot-atlas-git.vercel.app/roll-lab.html
+- **Multi-decade CFTC Historical Archive v0.6:** https://cot-atlas-git.vercel.app/history.html
 - **Original standalone edition:** https://cot-atlas-live.vercel.app (preserved independently)
 
 ## What works
@@ -89,3 +90,15 @@ The core signal engine is dependency-free in `lib/research-engine.js`; its deter
 ## Contract Roll Lab v0.5
 
 For contract-specific settlement/roll P&L with private browser-only CSV imports see [the Croatian detailed guide](docs/CONTRACT_ROLL_LAB_HR.md). This is not yet an integrated point-in-time COT strategy backtest. Do not compare percentage returns from Yahoo's proxy to contract-level USD P&L.
+
+## Multi-decade official CFTC history (v0.6)
+
+A new GitHub Action (`.github/workflows/core-history.yml`) automatically creates/updates a compressed SQLite archive of **34 curated flagship CFTC contract-market codes across seven official PRE report datasets**. The initial backfill queries Legacy futures from 1986, Legacy combined from 1995, and other CFTC report families from 2006; each report/contract has its own actual historical start date. Subsequent refreshes update overlapping 90-day windows weekly.
+
+The archive is `data/core-history.sqlite3.gz`; its machine-checkable provenance and family-level coverage are in `data/core-history-manifest.json`. The download script is `scripts/build_core_history.py`. Access historical positions from `/history.html` (including CSV export) or `/api/core-history?report=legacy_fut&category=noncommercial&code=088691&years=45`. The two-year **ALL-contract** weekly archive remains independent at `data/cot.sqlite3.gz`, and the CFTC's direct API remains available for all reported contract codes. All historical observations are real published CFTC data, potentially amended in the provider's current historical view; they are **NOT original as-published point-in-time vintages**.
+
+### Historical futures prices — crucial limitation
+
+The official CFTC dataset does not publish daily settlement-by-expiry futures prices. CME publishes settlement data under exchange data access/licensing conditions, and full historical per-expiry market data may require a paid provider. The existing Yahoo price endpoints expose **27 continuous/active-contract proxy tickers** and do not establish an audited price series for every expiry. The IBKR connector returned errors on attempted historical per-expiry price requests; IBKR's official historical availability is limited for expired futures. We **do not fabricate, store or publicly redistribute paid futures settlements**. The v0.5 contract roll calculator can apply properly to licensed, individually verified contract settlement history once that data source is available.
+
+Sources: [CFTC Historical Compressed](https://www.cftc.gov/MarketReports/CommitmentsofTraders/HistoricalCompressed/index.htm), [CFTC PRE](https://publicreporting.cftc.gov/), [CME Settlement Access FAQ](https://www.cmegroup.com/articles/faqs/access-to-cme-group-settlement-data-faq.html), [IBKR unavailable historical data](https://ibkrcampus.com/docs/web-api/v1/endpoints/market-data/unavailable-historical-data).
