@@ -46,7 +46,7 @@ function validate(text,rollEngine,{selectedRoot,minimumVolume=10,maxBytes=30*102
   throw Error("Pogrešan multiplier "+selectedRoot+": očekuje se "+(selectedRoot==="ES"?"50":"20")+" USD po indeksnom bodu");
  if(["ES","NQ"].includes(selectedRoot)&&parsed.tickSize!==0.25)
   throw Error("Nevažeći korak cijene: ES/NQ zahtijeva 0,25 boda");
- return {...parsed,bars:filtered,dates,contracts:seenContracts.size,firstDate:dates[0],lastDate:dates.at(-1],
+ return {...parsed,bars:filtered,dates,contracts:seenContracts.size,firstDate:dates[0],lastDate:dates.at(-1),
   source:"Private in-browser explicit-contract CSV import; source provenance not verified",
   proxyPriceBasis:"PRIVATE_USER_SUPPLIED_EXPLICIT_EXPIRY_CLOSE_PROXY_NOT_CME_SETTLEMENT",
   localAudit:{inputRows:parsed.bars.length,acceptedRows:filtered.length,rejectedLowVolume:rejected,
