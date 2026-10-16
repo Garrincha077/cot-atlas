@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {Buffer} from "node:buffer";
-import handler from "../api/community-expiries.js";
+import handler,{SOURCES,createHandler} from "../api/community-expiries.js";
+import {createHash} from "node:crypto";
 
 const fixture=(tag,dates=["2026-01-05","2026-01-06","2026-01-07","2026-01-08"])=>{
  const lines=["contract,datetime,open,high,low,close,volume"];
@@ -18,6 +19,7 @@ const mocks={
  "ESU6":fixture("ESU6",["2026-07-06","2026-07-07","2026-07-08","2026-07-09"]),
  "ESZ6":fixture("ESZ6",["2026-09-21","2026-09-22","2026-09-23","2026-09-24"])
 };
+const mockHandler=createHandler(SOURCES.map(s=>({...s,sha256:createHash("sha256").update(mocks[s.tag]).digest("hex")})));
 const fakeReq=(query={})=>({method:"GET",query:{root:"ES",years:"10",minVolume:"10",...query}});
 const fakeRes=()=>({code:200,headers:{},status(x){this.code=x;return this},setHeader(k,v){this.headers[k]=v},json(v){this.data=v;return v}});
 async function guarded(action){
@@ -38,7 +40,7 @@ test("reject invalid market roots or unsupported lookback/liquidity inputs",asyn
 });
 test("strict ES importer reads only explicit IBKR-labelled expiries and matches quote semantics",async()=>{
  await guarded(async()=>{
-  const x=fakeRes();await handler(fakeReq(),x);
+  const x=fakeRes();await mockHandler(fakeReq(),x);
   assert.equal(x.code,200);
   assert.equal(x.data.rows.length,16);
   assert.equal(x.data.contracts.length,4);
@@ -53,7 +55,7 @@ test("strict ES importer reads only explicit IBKR-labelled expiries and matches 
 test("missing upstream contract CSV never causes synthetic backfill",async()=>{
  const original=mocks.ESZ6;delete mocks.ESZ6;
  try{await guarded(async()=>{
-  const x=fakeRes();await handler(fakeReq(),x);
+  const x=fakeRes();await mockHandler(fakeReq(),x);
   assert.equal(x.code,200);assert.equal(x.data.rows.length,12);
   const absent=x.data.contracts.find(c=>c.contract==="ESZ26");
   assert.equal(absent.available,false);
@@ -64,7 +66,7 @@ test("do not treat off-session minutes or unlabelled root data as valid close",a
  const original=mocks.ESH6;
  mocks.ESH6=fixture("NQH6"); // wrong contract, must not quietly accept
  try{await guarded(async()=>{
-  const x=fakeRes();await handler(fakeReq(),x);
+  const x=fakeRes();await mockHandler(fakeReq(),x);
   assert.equal(x.code,200);assert.equal(x.data.rows.length,12);
   assert.equal(x.data.contracts.find(c=>c.contract==="ESH26").available,false);
  })}finally{mocks.ESH6=original}
@@ -77,4 +79,16 @@ test("research & roll UIs load community ES only on ES, with Yahoo fallback for 
   assert.ok(html.includes("/api/community-expiries?"),path);
   assert.ok(html.includes("/api/free-contracts?"),path);
  }
+});
+
+test("modified upstream ES payload fails SHA-256 verification without substituting another contract",async()=>{
+ const orig=mocks.ESM6;
+ mocks.ESM6=orig.replace("2026-04-06", "2026-04-05"); // Source changed: pinned fixture bytes must fail
+ try{await guarded(async()=>{
+  const x=fakeRes();await mockHandler(fakeReq(),x);
+  assert.equal(x.code,200);
+  assert.ok(x.data.contracts.find(c=>c.contract==="ESM26").reason.includes("SHA-256 changed"));
+  assert.ok(!x.data.rows.some(r=>r.contract==="ESM26"));
+  assert.equal(x.data.rows.length,12);
+ })}finally{mocks.ESM6=orig}
 });

@@ -6,7 +6,7 @@ import {parquetReadObjects} from "hyparquet";
 import {compressors} from "hyparquet-compressors";
 const SOURCE="https://huggingface.co/datasets/lynx1231/historical-equity-index-futures-data-sample/resolve/main/data/daily/part-00000.parquet";
 const DATASET="lynx1231/historical-equity-index-futures-data-sample";
-const EXPECTED_SHA256="9d663cf2425e5f11c19a4d5292c75e6bfec96880e28d7446897f165d6f1bffb6";
+export const EXPECTED_SHA256="9d663cf2425e5f11c19a4d5292c75e6bfec96880e28d7446897f165d6f1bffb6";
 const LIMIT_BYTES=250000, LIMIT_ROWS=9000;
 const CONTRACTS=[
  {tag:"NQH26",expiry:"2026-03-20"},

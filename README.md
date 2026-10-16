@@ -236,3 +236,14 @@ Private research now offers a second price source for NQ, alongside existing Yah
 - Exactly held-contract roll audit with this source: 48/48 sampled 4-week windows had sufficient observed data. CFTC 10Y history joined via existing TFF leveraged funds vs asset managers yields 39 hypothetical signal × hold-period completions across all 25 configurations. ZERO configurations satisfy evidence-quality gates. Sample gaps, as-published COT vintages, executable fills and multiple testing remain risks.
 - Source restrictions apply even for private research. The user-facing UI states these are third-party DAILY CLOSE evaluation data, NOT CME settlements. API: /api/nq-evaluation?root=NQ&years=10&minVolume=10 ; other roots are rejected, source/validation failures return HTTP 503 with no fabricated fallback.
 - Checks: node --test tests/test_nq_evaluation.mjs plus existing suite. GitHub research CI first installs package-lock pinned dependencies using npm ci --ignore-scripts.
+
+
+## v1.5 — Free source-integrity watchdog (no extra Vercel deployments)
+
+Four community ES 2026 minute-CSV source bytes are now **SHA-256 pinned** in `api/community-expiries.js`. If an upstream file is revised, that specific contract is **quarantined and omitted from the simulated roll-price series** instead of being silently accepted. The original publisher's IBKR claim is still unaudited, and pinning does NOT establish that the prices are authenticated exchange settlements.
+
+All four pinned ES files plus the SHA-pinned Hugging Face NQ 2026 daily Parquet research sample are checked by `scripts/check_source_integrity.mjs`. The watchdog also inspects the repository's local CFTC manifest: it requires seven datasets, a manifest generated no more than 12 days ago, and all report dates within 21 days; source reports are explicitly current revised COT records and are NOT point-in-time vintages.
+
+`.github/workflows/source-watch.yml` runs Mon/Wed/Sat at 11:47 UTC (after the Saturday backup CFTC archive job), and can be manually dispatched. It downloads inputs in the GitHub Actions runner **only to calculate SHA-256**, without persisting or uploading any third-party price bars. On a mismatch, timeout, missing dataset or stale archive, the workflow fails and opens a single GitHub issue `[source-watch] COT Atlas data integrity alert`. While the issue is open, repeated failures do not create duplicates; successful recovery closes it. The user can optionally integrate GitHub Issue notifications with Telegram separately.
+
+CI includes offline regression tests for checksum pinning, tampered ES fixtures, source availability and CFTC freshness. The monitor is **not** a proof of trading data origin, completeness, licensing or executable P&L. Third-party source access remains subject to applicable terms. It is deliberately independent of Vercel's free deployment daily limits.
