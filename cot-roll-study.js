@@ -151,6 +151,7 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    const quality=root.COT_QUALITY.assess({train,holdout,boundaryExcluded:excludedBoundary,splitDate,priceDates:dates});
    out.push({strategy:strategy.id,label:strategy.label,horizonWeeks,diagnostics,quality,
      inSample:metrics(train),outOfSample:metrics(holdout),combined:metrics(trades),
+     completedSignalDates:trades.map(x=>x.signalDate),
      recent:trades.slice(-15)});
   }
  }
@@ -166,7 +167,11 @@ function study(primaryRaw,oppositeRaw,data,rollEngine,opts={}){
    holdoutMethod:"PURGED_CHRONOLOGICAL_BY_ENTRY_EXIT: training exits strictly before split, holdout entries on/after split, boundary-spanning trades excluded from both subsets.",
    root:data.marketRoot,contractCount:data.contracts,quoteRows:data.bars.length,
    firstPrice:dates[0],lastPrice:dates.at(-1),firstCot,lastCot,excludedReleaseReports:excluded,releaseSources,splitDate,
-   options,strategies:STRATEGIES,rows:out};
+   options,strategies:STRATEGIES,rows:out,
+   // Distinct Tuesday COT observation dates; not statistically independent trades.
+   distinctCompletedCotReportDates:[...new Set(out.flatMap(x=>x.completedSignalDates))].sort(),
+   distinctHoldoutCotReportDates:[...new Set(out.flatMap(x=>x.recent.filter(t=>t.entry>=splitDate).map(t=>t.signalDate)))].sort(),
+   distinctSignalCaution:"Distinct COT report dates can still produce overlapping positions, correlated strategies and multiple-tested horizons; this is NOT an independent-trade count."};
 }
 root.COT_ROLL_STUDY={study,generate,HORIZONS,STRATEGIES};
 })(typeof window!=="undefined"?window:globalThis);
