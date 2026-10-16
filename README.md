@@ -170,3 +170,18 @@ Source files: cot-roll-study.js, roll-research.html; tests/test_roll_study.mjs. 
   - CL: **13** -> **59**.
   - ES: **7** -> **5**; liquidity screening reduced coverage because the available direct-expiry price set is sparse.
 - **Do not present counts above as statistically independent trades, holdout evidence or established performance.** The last 30% of market-price observations is a small holdout for many futures instruments. Report selection is across 25 configurations, and Yahoo close is not an exchange-reproducible fill.
+
+
+## v1.1 — Private Futures Coverage Audit
+
+[Open the Coverage Audit](https://cot-atlas-git.vercel.app/coverage.html) (Vercel SSO required).
+
+- On-demand comparison for ES/NQ, any single futures root, or all 13 roots, with bounded requests; no raw price bars persisted in public GitHub.
+- For each individual expiry: count of contract-day bars, first/last day, median reported volume, largest calendar gap, and approximate Monday-Friday quote coverage. Exchange holidays are not identified in this approximation.
+- A 1/2/4/8/12-week sampled roll-readiness audit reuses the exact held-contract engine. These are potential pricing windows, NOT COT signals, independent trades, or evidence of executable fills.
+- Fail-closed price-gap rule: a position spanning more than eight calendar days with no quoted market sessions is rejected; no forward fill or fake roll-gap gain.
+- June 2027 E-mini S&P 500 (ESM27.CME) added after confirming the 2027-06-17 last trading date through IBKR. Earlier ES/NQ expiries from 2025 and early 2026 returned HTTP 404 on sampled Yahoo lookups; no synthetic replacements added.
+- In a source sample at 10Y/volume≥10, ESZ26 had 163 price observations covering only 19.3% of Monday-Friday dates between its first and last quote, including a 399-day gap. NQZ26 had 112 observations and 84.2% observed weekday coverage. This is why the audit distinguishes price records from connected histories.
+- Summary JSON exports deliberately exclude all underlying Yahoo price bars and include quote quality, expiry gaps and sampled roll success/failure counts. The app remains Vercel-login-protected; source access terms still apply.
+
+Tests: node --test tests/test_coverage_audit.mjs. GitHub CI runs this alongside all earlier tests.
