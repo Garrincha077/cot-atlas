@@ -209,3 +209,18 @@ Verified real CFTC + current per-expiry Yahoo sources for GC, CL, ES and NQ: non
 No absent ES/NQ contracts were filled using a continuous contract, guessed expiry or simulated quote. Quoted data are requested on demand and never committed to the public repo. Vercel SSO remains enabled.
 
 Regression tests: `tests/test_roll_study.mjs` covers the strict chronological split, sample sufficiency, classification and impossibility of upgrading these results to validated PIT/settlement trades.
+
+
+## v1.3 — ES contract-labelled 2026 minute history (on-demand private source)
+
+NEW: user-selectable exact-expiry community ES minute observations alongside the existing Yahoo per-expiry daily close series in roll-research.html, roll-lab.html and coverage.html.
+
+- Upstream: https://github.com/kfccolonel1/BARS — community IBKR-labelled raw ES 1-minute CSV files in raw/ES/1min/ib/. These are NOT independently authenticated IBKR data or official exchange settlements.
+- Four explicitly labelled ES contracts: ESH6→ESH26 (expires 2026-03-20), ESM6→ESM26 (2026-06-18), ESU6→ESU26 (2026-09-18), ESZ6→ESZ26 (2026-12-18); last-trading days confirmed using connected IBKR contract metadata.
+- API /api/community-expiries?root=ES&years=10&minVolume=10 fetches four fixed source files privately on demand. It rejects wrong contract IDs, duplicate/invalid minutes, post-expiry observations, session volume shortages, and incomplete daily sessions. Daily close is the last observed 16:55–16:59 ET minute with at least 300 minute bars in that exchange session. CME session dates roll at 18:00 ET. No gap-fill.
+- Individual source-file SHA-256, original minute-row count, rejected entries, and per-expiry available date ranges are reported for provenance. Raw and aggregated price histories are not committed to the public repo; responses use private/no-store headers.
+- Real source verification on 2026-10-16: 4 files totalling 305,248 minute rows resulted in 213 contract-day close proxies (54 ESH26, 69 ESM26, 68 ESU26, 22 ESZ26), spanning 2025-12-26 to 2026-10-02. All 36/36 sampled four-week quote windows passed the contract-specific roll-readiness continuity test, but those are NOT 36 COT trades.
+- With 10Y historical COT and the new ES exact-expiry close data, 44 hypothetical strategy × holding-horizon events completed across all 25 setups. ALL setups remain insufficient according to the strict purged holdout and evidence-quality gate.
+- This is a research close proxy; data origin, execution, settlement and original historical COT vintages are not independently audited. Private Vercel SSO does not override provider usage terms. NQ is NOT upgraded with inferred contract identifiers.
+
+Tests: node --test tests/test_community_expiries.mjs, plus existing coverage, roll, COT and UI CI.
