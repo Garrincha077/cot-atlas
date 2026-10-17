@@ -1,50 +1,50 @@
 {
   "source": "CFTC Public Reporting",
-  "generated_at": "2026-10-16T09:59:32.063451+00:00",
-  "since": "2026-07-18",
-  "position_rows": 579789,
+  "generated_at": "2026-10-17T01:20:13.571722+00:00",
+  "since": "2026-07-19",
+  "position_rows": 585812,
   "datasets": [
     {
       "report": "disagg_fut",
-      "source_rows": 3323,
-      "positions_processed": 16615,
-      "latest_report": "2026-10-06"
+      "source_rows": 3598,
+      "positions_processed": 17990,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "disagg_comb",
-      "source_rows": 3413,
-      "positions_processed": 17065,
-      "latest_report": "2026-10-06"
+      "source_rows": 3696,
+      "positions_processed": 18480,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "tff_fut",
-      "source_rows": 1120,
-      "positions_processed": 5600,
-      "latest_report": "2026-10-06"
+      "source_rows": 1215,
+      "positions_processed": 6075,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "tff_comb",
-      "source_rows": 1120,
-      "positions_processed": 5600,
-      "latest_report": "2026-10-06"
+      "source_rows": 1215,
+      "positions_processed": 6075,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "legacy_fut",
-      "source_rows": 4443,
-      "positions_processed": 13329,
-      "latest_report": "2026-10-06"
+      "source_rows": 4813,
+      "positions_processed": 14439,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "legacy_comb",
-      "source_rows": 4533,
-      "positions_processed": 13599,
-      "latest_report": "2026-10-06"
+      "source_rows": 4911,
+      "positions_processed": 14733,
+      "latest_report": "2026-10-13"
     },
     {
       "report": "supplemental",
-      "source_rows": 156,
-      "positions_processed": 468,
-      "latest_report": "2026-10-06"
+      "source_rows": 169,
+      "positions_processed": 507,
+      "latest_report": "2026-10-13"
     }
   ],
   "point_in_time_verified": false

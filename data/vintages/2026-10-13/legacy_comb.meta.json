@@ -1,0 +1,10 @@
+{
+  "report": "legacy_comb",
+  "report_date": "2026-10-13",
+  "first_observed_at_utc": "2026-10-17T01:20:13.624764+00:00",
+  "source": "CFTC Public Reporting Environment, fetched via GitHub Actions",
+  "original_publication_verified": false,
+  "point_in_time_limitation": "Snapshot is first observed by the pipeline, not proven to be the publication-original version.",
+  "position_rows": 1134,
+  "archive_bytes": 17943
+}
