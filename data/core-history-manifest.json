@@ -2,8 +2,8 @@
   "source": "CFTC Public Reporting Environment (current, potentially revised historical series)",
   "vintage_verified": false,
   "price_data_available": false,
-  "generated_at_utc": "2026-10-16T23:03:13.807946+00:00",
-  "requested_since": "2026-07-18",
+  "generated_at_utc": "2026-10-23T23:34:25.320666+00:00",
+  "requested_since": "2026-07-25",
   "core_contracts_requested": 34,
   "core_contract_codes": [
     "13874A",
@@ -41,59 +41,59 @@
     "133741",
     "146021"
   ],
-  "sqlite_sha256_gzip": "77dce096db89b504a15d471f18b4338377c42e1066154bc90a945d8af0e49691",
-  "compressed_bytes": 21413371,
-  "total_position_rows": 670228,
-  "total_observation_rows": 179202,
+  "sqlite_sha256_gzip": "781e18ee1be55e9c8ba324cb4becbc50ffe9ce70acf53930900585a483574f6a",
+  "compressed_bytes": 21427659,
+  "total_position_rows": 670802,
+  "total_observation_rows": 179348,
   "coverage": [
     {
       "report": "disagg_comb",
       "first": "2006-06-13",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 17,
-      "observations": 17801
+      "observations": 17818
     },
     {
       "report": "disagg_fut",
       "first": "2006-06-13",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 17,
-      "observations": 17764
+      "observations": 17781
     },
     {
       "report": "legacy_comb",
       "first": "1995-03-21",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 34,
-      "observations": 48481
+      "observations": 48515
     },
     {
       "report": "legacy_fut",
       "first": "1986-01-15",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 34,
-      "observations": 53938
+      "observations": 53972
     },
     {
       "report": "supplemental",
       "first": "2006-01-03",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 10,
-      "observations": 10472
+      "observations": 10482
     },
     {
       "report": "tff_comb",
       "first": "2006-06-13",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 17,
-      "observations": 15373
+      "observations": 15390
     },
     {
       "report": "tff_fut",
       "first": "2006-06-13",
-      "last": "2026-10-13",
+      "last": "2026-10-20",
       "contracts": 17,
-      "observations": 15373
+      "observations": 15390
     }
   ],
   "queries": [
@@ -102,56 +102,56 @@
       "dataset": "72hh-3qpy",
       "rows": 221,
       "positions": 1105,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "disagg_comb",
       "dataset": "kh3c-gbw2",
       "rows": 221,
       "positions": 1105,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "tff_fut",
       "dataset": "gpe5-46if",
       "rows": 221,
       "positions": 1105,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "tff_comb",
       "dataset": "yw9f-hn96",
       "rows": 221,
       "positions": 1105,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "legacy_fut",
       "dataset": "6dca-aqww",
       "rows": 442,
       "positions": 1326,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "legacy_comb",
       "dataset": "jun7-fc8e",
       "rows": 442,
       "positions": 1326,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     },
     {
       "report": "supplemental",
       "dataset": "4zgm-a668",
       "rows": 130,
       "positions": 390,
-      "first": "2026-07-21",
-      "last": "2026-10-13"
+      "first": "2026-07-28",
+      "last": "2026-10-20"
     }
   ]
 }
