@@ -1,0 +1,10 @@
+{
+  "report": "legacy_fut",
+  "report_date": "2026-10-20",
+  "first_observed_at_utc": "2026-10-24T01:36:25.936515+00:00",
+  "source": "CFTC Public Reporting Environment, fetched via GitHub Actions",
+  "original_publication_verified": false,
+  "point_in_time_limitation": "Snapshot is first observed by the pipeline, not proven to be the publication-original version.",
+  "position_rows": 1128,
+  "archive_bytes": 17770
+}
