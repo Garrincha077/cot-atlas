@@ -1,0 +1,10 @@
+{
+  "report": "disagg_fut",
+  "report_date": "2026-10-27",
+  "first_observed_at_utc": "2026-10-31T02:24:19.863934+00:00",
+  "source": "CFTC Public Reporting Environment, fetched via GitHub Actions",
+  "original_publication_verified": false,
+  "point_in_time_limitation": "Snapshot is first observed by the pipeline, not proven to be the publication-original version.",
+  "position_rows": 1425,
+  "archive_bytes": 18739
+}
