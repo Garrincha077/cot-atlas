@@ -2,8 +2,8 @@
   "source": "CFTC Public Reporting Environment (current, potentially revised historical series)",
   "vintage_verified": false,
   "price_data_available": false,
-  "generated_at_utc": "2026-11-21T01:48:04.111328+00:00",
-  "requested_since": "2026-08-23",
+  "generated_at_utc": "2026-11-28T02:58:25.973985+00:00",
+  "requested_since": "2026-08-30",
   "core_contracts_requested": 34,
   "core_contract_codes": [
     "13874A",
@@ -41,8 +41,8 @@
     "133741",
     "146021"
   ],
-  "sqlite_sha256_gzip": "8855dbc5a8043f388a9a76c5c837eab56670e484d2b4da17b61593d147a63a7d",
-  "compressed_bytes": 21506725,
+  "sqlite_sha256_gzip": "107603438fb2a4db498142be154ed21305c007f3a06536019278ca085f32003c",
+  "compressed_bytes": 21507653,
   "total_position_rows": 673098,
   "total_observation_rows": 179932,
   "coverage": [
@@ -100,57 +100,57 @@
     {
       "report": "disagg_fut",
       "dataset": "72hh-3qpy",
-      "rows": 221,
-      "positions": 1105,
-      "first": "2026-08-25",
+      "rows": 204,
+      "positions": 1020,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "disagg_comb",
       "dataset": "kh3c-gbw2",
-      "rows": 221,
-      "positions": 1105,
-      "first": "2026-08-25",
+      "rows": 204,
+      "positions": 1020,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "tff_fut",
       "dataset": "gpe5-46if",
-      "rows": 221,
-      "positions": 1105,
-      "first": "2026-08-25",
+      "rows": 204,
+      "positions": 1020,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "tff_comb",
       "dataset": "yw9f-hn96",
-      "rows": 221,
-      "positions": 1105,
-      "first": "2026-08-25",
+      "rows": 204,
+      "positions": 1020,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "legacy_fut",
       "dataset": "6dca-aqww",
-      "rows": 442,
-      "positions": 1326,
-      "first": "2026-08-25",
+      "rows": 408,
+      "positions": 1224,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "legacy_comb",
       "dataset": "jun7-fc8e",
-      "rows": 442,
-      "positions": 1326,
-      "first": "2026-08-25",
+      "rows": 408,
+      "positions": 1224,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     },
     {
       "report": "supplemental",
       "dataset": "4zgm-a668",
-      "rows": 130,
-      "positions": 390,
-      "first": "2026-08-25",
+      "rows": 120,
+      "positions": 360,
+      "first": "2026-09-01",
       "last": "2026-11-17"
     }
   ]
